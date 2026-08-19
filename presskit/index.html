@@ -1,0 +1,409 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CastaliaOS 98 PE — Press Kit · Tombatossals Softworks</title>
+<meta name="description" content="Press kit for CastaliaOS 98 PE, an original Win9x/XP-inspired retro desktop operating system written from scratch in C.">
+<meta name="author" content="Dave Abellan, Claudio di Castello (Tombatossals Softworks)">
+<link rel="icon" href="logo/favicon.ico" sizes="16x16 32x32 48x48 64x64">
+<link rel="icon" type="image/png" href="logo/castaliaos-icon-64.png">
+<style>
+  :root{
+    --navy:#0a1e4e; --blue:#1b3f9a; --blue2:#2e5cc8; --gold:#d8a83c; --gold-hi:#f4dc8e;
+    --ink:#1a2230; --muted:#5a6478; --line:#e2e7f0; --bg:#f5f7fb; --card:#ffffff;
+    --radius:14px; --maxw:1080px;
+  }
+  @media (prefers-color-scheme:dark){
+    :root{ --ink:#e8edf6; --muted:#9fb0cc; --line:#26314a; --bg:#0d1220; --card:#141b2c; }
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;font:16px/1.6 -apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+       color:var(--ink);background:var(--bg);-webkit-font-smoothing:antialiased}
+  a{color:var(--blue2);text-decoration:none}
+  a:hover{text-decoration:underline}
+  .wrap{max-width:var(--maxw);margin:0 auto;padding:0 20px}
+
+  header.hero{background:radial-gradient(120% 140% at 40% 20%,#2e5cc8 0%,#102a74 60%,#0a1e4e 100%);
+       color:#fff;padding:44px 0 30px;border-bottom:4px solid var(--gold)}
+  .hero .logo{display:block;max-width:640px;width:100%;height:auto;margin:6px 0 14px}
+  .hero p.tag{font-size:1.15rem;margin:0 0 20px;color:#dbe6ff;max-width:60ch}
+  .chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px}
+  .chip{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.22);
+        color:#fff;border-radius:999px;padding:5px 13px;font-size:.85rem;font-weight:600}
+  .chip b{color:var(--gold-hi)}
+
+  nav.bar{position:sticky;top:0;z-index:10;background:var(--card);border-bottom:1px solid var(--line);
+       backdrop-filter:saturate(1.4) blur(6px)}
+  nav.bar .wrap{display:flex;flex-wrap:wrap;gap:4px 18px;align-items:center;padding-top:10px;padding-bottom:10px}
+  nav.bar strong{color:var(--gold);font-weight:800}
+  nav.bar a{color:var(--muted);font-weight:600;font-size:.92rem}
+  nav.bar a:hover{color:var(--ink);text-decoration:none}
+
+  section{padding:40px 0;border-bottom:1px solid var(--line)}
+  h2{font-size:1.5rem;margin:0 0 4px;color:var(--ink);letter-spacing:-.01em}
+  h2 .k{color:var(--gold);font-weight:800;margin-right:.4em}
+  .lead{color:var(--muted);margin:0 0 22px;max-width:70ch}
+  h3{font-size:1.05rem;margin:22px 0 8px}
+
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:22px}
+  .grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+  @media(max-width:760px){.grid2,.grid3{grid-template-columns:1fr}}
+
+  .card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:18px 20px}
+  dl.facts{margin:0;display:grid;grid-template-columns:auto 1fr;gap:8px 16px}
+  dl.facts dt{color:var(--muted);font-weight:700}
+  dl.facts dd{margin:0}
+
+  ul.feat{margin:6px 0 0;padding-left:1.1em}
+  ul.feat li{margin:4px 0}
+  ul.feat li b{color:var(--ink)}
+
+  .gallery{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+  @media(max-width:900px){.gallery{grid-template-columns:repeat(2,1fr)}}
+  @media(max-width:560px){.gallery{grid-template-columns:1fr}}
+  figure{margin:0;background:var(--card);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+  figure img{display:block;width:100%;height:auto;background:#0b1a3a}
+  figcaption{padding:9px 12px;font-size:.85rem;color:var(--muted)}
+
+  .stat{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin:6px 0 4px}
+  @media(max-width:640px){.stat{grid-template-columns:repeat(2,1fr)}}
+  .stat .n{font-size:1.9rem;font-weight:800;color:var(--blue2);line-height:1.1}
+  .stat .l{color:var(--muted);font-size:.85rem}
+
+  .cta{background:linear-gradient(180deg,#1b3f9a,#0a1e4e);color:#fff;border-radius:var(--radius);
+       padding:26px 24px;display:flex;flex-wrap:wrap;gap:16px;justify-content:space-between;align-items:center}
+  .cta a.btn{background:var(--gold);color:#1a1206;font-weight:800;padding:11px 20px;border-radius:10px}
+  .cta a.btn:hover{background:var(--gold-hi);text-decoration:none}
+  .cta .em{color:#dbe6ff}
+  code{background:rgba(127,127,127,.16);padding:.08em .4em;border-radius:5px;font-size:.9em}
+  footer{padding:28px 0;color:var(--muted);font-size:.9rem}
+  .files a{display:inline-block;margin:0 14px 6px 0;font-weight:600}
+
+  /* ---- Print (the PDF press kit is rendered from this page) ---- */
+  @media print{
+    :root{ --ink:#171c26; --muted:#4d566a; --line:#c9d2e2; --bg:#fff; --card:#fff; }
+    html,body{background:#fff}
+    body{-webkit-print-color-adjust:exact;print-color-adjust:exact;font-size:11.5px}
+    nav.bar{display:none}
+    header.hero{padding:22px 0 16px}
+    .hero .logo{max-width:420px}
+    section{padding:16px 0;break-inside:avoid}
+    .card,figure,.cta{break-inside:avoid}
+    #shots .gallery{grid-template-columns:repeat(2,1fr)}
+    a{color:var(--ink);text-decoration:none}
+    #tour figcaption::after{content:" (animated in the online kit)";color:var(--muted)}
+    .cta a.btn{border:1px solid #b98f22}
+  }
+  @page{ margin:14mm 12mm; }
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="wrap">
+    <img class="logo" src="logo/castaliaos-logo-dark.png" alt="CastaliaOS 98 PE">
+    <p class="tag">An original, Win9x/XP‑inspired retro desktop operating system for
+      DOS‑class PCs — written from scratch in C. No Microsoft code, art, or branding.</p>
+    <div class="chips">
+      <span class="chip">By <b>Dave Abellan &amp; Claudio di Castello</b></span>
+      <span class="chip">Studio <b>Tombatossals Softworks</b></span>
+      <span class="chip">Price <b>Free · MIT</b></span>
+      <span class="chip">Status <b>Public preview · v0.1.0</b></span>
+      <span class="chip">Platforms <b>DOS 386+ · Emulators</b></span>
+      <span class="chip">Written in <b>C · ~30.9k lines</b></span>
+    </div>
+  </div>
+</header>
+
+<nav class="bar">
+  <div class="wrap">
+    <strong>CastaliaOS</strong>
+    <a href="#tour">Tour</a>
+    <a href="#about">About</a>
+    <a href="#facts">Fact sheet</a>
+    <a href="#features">Features</a>
+    <a href="#shots">Screenshots</a>
+    <a href="#tech">Technical</a>
+    <a href="#roadmap">Roadmap</a>
+    <a href="#press">Press release</a>
+    <a href="#contact">Contact</a>
+  </div>
+</nav>
+
+<section id="tour" style="text-align:center;background:linear-gradient(180deg,rgba(46,92,200,.06),transparent)">
+  <div class="wrap">
+    <h2 style="text-align:left"><span class="k">#</span>The tour</h2>
+    <p class="lead" style="text-align:left">A quick animated look at the desktop, the apps,
+      and the live benchmark filling in — all rendered by the OS's own software renderer.</p>
+    <figure style="max-width:720px;margin:0 auto;border:1px solid var(--line);border-radius:12px;overflow:hidden">
+      <img src="media/trailer.gif" alt="Animated tour of CastaliaOS 98 PE" style="width:100%;display:block">
+      <figcaption style="text-align:left">Animated tour (GIF) — desktop, File Manager, Media Player,
+        Solitaire, the Benchmark Suite, About, and more.</figcaption>
+    </figure>
+  </div>
+</section>
+
+<section id="about">
+  <div class="wrap">
+    <h2><span class="k">#</span>About CastaliaOS</h2>
+    <p class="lead">Remember beveled buttons, a Start menu, glossy title bars, and a file
+      explorer with a friendly blue task pane? CastaliaOS recreates that feeling as a
+      <b>brand‑new, legally‑clean</b> system you can actually run on period hardware.</p>
+    <div class="grid2">
+      <div class="card">
+        <p>CastaliaOS 98 PE ("Powerful Edition") is a from‑scratch desktop operating
+        system that captures the look and feel of late‑90s / early‑2000s computing while
+        being completely original. Hand‑written in portable C, it boots on a 386,
+        composites its entire UI with an original software renderer, and ships a real
+        desktop shell: a Start‑style launcher, a Windows XP‑style file explorer, four
+        virtual desktops, window snapping, and a themeable toolkit — with 20+ apps on top,
+        including a Winamp‑style WAV player, a benchmark suite, and Klondike Solitaire.</p>
+        <p style="margin-bottom:0">It is free and open source under the MIT license, and it
+        develops and unit‑tests on a modern "host" build so the whole stack stays
+        verifiable — while shipping to real DOS via Open Watcom.</p>
+      </div>
+      <div class="card">
+        <div class="stat">
+          <div><div class="n">~30.9k</div><div class="l">lines of C</div></div>
+          <div><div class="n">~116</div><div class="l">source files</div></div>
+          <div><div class="n">457</div><div class="l">tests passing</div></div>
+          <div><div class="n">20+</div><div class="l">applications</div></div>
+          <div><div class="n">6</div><div class="l">architecture layers</div></div>
+          <div><div class="n">4</div><div class="l">virtual desktops</div></div>
+          <div><div class="n">386+</div><div class="l">target hardware</div></div>
+          <div><div class="n">MIT</div><div class="l">open source</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="facts">
+  <div class="wrap">
+    <h2><span class="k">#</span>Fact sheet</h2>
+    <div class="grid2">
+      <div class="card">
+        <dl class="facts">
+          <dt>Title</dt><dd>CastaliaOS 98 PE ("Powerful Edition")</dd>
+          <dt>Creators</dt><dd>Dave Abellan &amp; Claudio di Castello</dd>
+          <dt>Studio</dt><dd>Tombatossals Softworks (independent)</dd>
+          <dt>Type</dt><dd>Original retro desktop OS / hobby operating system</dd>
+          <dt>Release</dt><dd>In development — public preview (v0.1.0, MVP / Phase 1)</dd>
+          <dt>Platforms</dt><dd>Real DOS (386+), DOSBox, 86Box, PCem, QEMU; headless host build for CI</dd>
+          <dt>Price</dt><dd>Free — open source (MIT)</dd>
+          <dt>Language</dt><dd>English UI, source &amp; docs</dd>
+          <dt>Website</dt><dd><a href="https://tombatossalssoftworks.com">tombatossalssoftworks.com</a></dd>
+          <dt>Contact</dt><dd><a href="mailto:hello@tombatossalssoftworks.com">hello@tombatossalssoftworks.com</a></dd>
+        </dl>
+      </div>
+      <div class="card">
+        <h3 style="margin-top:0">What makes it notable</h3>
+        <ul class="feat">
+          <li>100% <b>original code and artwork</b> — a real, runnable retro OS, not a theme or a mod.</li>
+          <li>Runs on <b>genuine DOS hardware</b>, yet develops and tests on a modern host build.</li>
+          <li>An <b>original software renderer</b> with XP‑style glossy chrome, drop shadows, and dirty‑rect compositing in a tiny memory budget.</li>
+          <li><b>Extensible</b>: discoverable <code>.CAPP</code> add‑ons appear as first‑class launcher apps — something Windows 98 SE never had.</li>
+          <li><b>Four virtual desktops</b>, window snapping/tiling with a live preview outline, right‑click menus, and live theming.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="features">
+  <div class="wrap">
+    <h2><span class="k">#</span>Features</h2>
+    <div class="grid2">
+      <div class="card">
+        <h3 style="margin-top:0">Desktop &amp; shell</h3>
+        <ul class="feat">
+          <li>Two‑column XP‑style Start panel with full keyboard navigation</li>
+          <li>Taskbar with Quick Launch, system tray, and a clock + date tooltip</li>
+          <li>Four instant virtual desktops; window snapping &amp; tiling; draggable desktop icons</li>
+          <li>Right‑click context menus; live‑recoloring themes (incl. XP‑style <b>Aurora</b>)</li>
+          <li>Six bundled wallpapers with a live picker &amp; monitor preview</li>
+          <li>Software cursor, drop shadows, open/close/minimize animations, screensaver</li>
+        </ul>
+        <h3>Window manager &amp; toolkit</h3>
+        <ul class="feat">
+          <li>Real WM: frames, caption buttons, focus/z‑order, Alt+Tab, resize</li>
+          <li>Original UI toolkit: buttons, checks, radios, lists, menus, text fields, dialogs</li>
+          <li>Shared system clipboard across apps</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3 style="margin-top:0">Applications</h3>
+        <ul class="feat">
+          <li><b>File Manager</b> — XP‑style Explorer: address bar, blue task pane, 3 views, sortable columns, context menus, Properties, search, two‑pane mode</li>
+          <li><b>Media Player</b> — Winamp‑style WAV player with a live visualizer, a drag‑to‑reorder playlist, shuffle/repeat, folder scanning</li>
+          <li><b>CastaliaWrite</b> — a word processor: menus, flat toolbars, ruler, page view, word‑wrap, bold/italic/underline, alignment, save/load</li>
+          <li><b>CastaliaSheet</b> — a three‑sheet workbook with a real formula engine: references, ranges, SUM/AVG/MIN/MAX/COUNT/ABS/INT/ROUND, Auto‑Sum, CSV save/load, error cells</li>
+          <li><b>Benchmark Suite</b> — CPU/memory/graphics tests with a CastaliaMark score</li>
+          <li><b>About</b> — tabbed hardware &amp; live source‑code statistics</li>
+          <li><b>Solitaire</b> (Klondike), <b>Clock &amp; Calendar</b>, <b>Character Map</b>, <b>Mines</b></li>
+          <li>Notepad, Calculator, Task Manager, CastaliaPaint, Viewer, Log Viewer, Control Center, System Information</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="shots">
+  <div class="wrap">
+    <h2><span class="k">#</span>Screenshots</h2>
+    <p class="lead">Native 800×600 captures. Full‑resolution PNGs are in the
+      <code>screenshots/</code> folder. 100% original UI and artwork.</p>
+    <div class="gallery">
+      <figure><a href="screenshots/01-desktop.png"><img src="screenshots/01-desktop.png" alt="Desktop with the Aurora theme and Castalia Hills wallpaper"></a><figcaption>The desktop — Aurora theme, "Castalia Hills" wallpaper.</figcaption></figure>
+      <figure><a href="screenshots/02-file-manager.png"><img src="screenshots/02-file-manager.png" alt="File Manager, XP-style Explorer"></a><figcaption>File Manager — XP‑style Explorer with a blue task pane.</figcaption></figure>
+      <figure><a href="screenshots/03-media-player.png"><img src="screenshots/03-media-player.png" alt="Winamp-style Media Player"></a><figcaption>Media Player — a live WAV visualizer and playlist.</figcaption></figure>
+      <figure><a href="screenshots/04-solitaire.png"><img src="screenshots/04-solitaire.png" alt="Klondike Solitaire"></a><figcaption>Solitaire — Klondike with drag‑and‑drop and a bouncing‑cards win.</figcaption></figure>
+      <figure><a href="screenshots/05-benchmark-suite.png"><img src="screenshots/05-benchmark-suite.png" alt="Benchmark Suite with a CastaliaMark score"></a><figcaption>Benchmark Suite — CPU/memory/graphics + CastaliaMark.</figcaption></figure>
+      <figure><a href="screenshots/06-about.png"><img src="screenshots/06-about.png" alt="About CastaliaOS window"></a><figcaption>About — hardware and live source‑code statistics.</figcaption></figure>
+      <figure><a href="screenshots/07-clock-calendar.png"><img src="screenshots/07-clock-calendar.png" alt="Clock, Calendar and Agenda"></a><figcaption>Clock, Calendar &amp; Agenda — a live clock and a day’s appointments.</figcaption></figure>
+      <figure><a href="screenshots/08-character-map.png"><img src="screenshots/08-character-map.png" alt="Character Map"></a><figcaption>Character Map — pick glyphs and copy them.</figcaption></figure>
+      <figure><a href="screenshots/10-file-manager-icons.png"><img src="screenshots/10-file-manager-icons.png" alt="File Manager icons grid view"></a><figcaption>File Manager — the Icons view, with live image thumbnails.</figcaption></figure>
+      <figure><a href="screenshots/11-context-menu.png"><img src="screenshots/11-context-menu.png" alt="File Manager right-click context menu"></a><figcaption>Right‑click context menus, XP‑style.</figcaption></figure>
+      <figure><a href="screenshots/17-word-processor.png"><img src="screenshots/17-word-processor.png" alt="CastaliaWrite word processor"></a><figcaption>CastaliaWrite — menus, toolbars, ruler and page view.</figcaption></figure>
+      <figure><a href="screenshots/16-spreadsheet.png"><img src="screenshots/16-spreadsheet.png" alt="CastaliaSheet spreadsheet with formulas"></a><figcaption>CastaliaSheet — Name Box, fx, sheet tabs and a live column sum.</figcaption></figure>
+      <figure><a href="screenshots/18-paint.png"><img src="screenshots/18-paint.png" alt="CastaliaPaint raster editor"></a><figcaption>CastaliaPaint — ten tools, an options box and the 28‑swatch palette.</figcaption></figure>
+      <figure><a href="screenshots/19-network.png"><img src="screenshots/19-network.png" alt="The Network window pinging a host"></a><figcaption>Network — ARP table, TCP/IP settings and a working ping.</figcaption></figure>
+      <figure><a href="screenshots/20-theme-editor.png"><img src="screenshots/20-theme-editor.png" alt="The Theme Editor with a live preview"></a><figcaption>Theme Editor — mix any color, watch the preview, apply it live.</figcaption></figure>
+      <figure><a href="screenshots/21-file-dialog.png"><img src="screenshots/21-file-dialog.png" alt="The shared Open dialog browsing a folder"></a><figcaption>One Open / Save As dialog, shared by every app that touches a file.</figcaption></figure>
+      <figure><a href="screenshots/22-help.png"><img src="screenshots/22-help.png" alt="The Help browser"></a><figcaption>Help — topics on the left, and it describes the system as it is.</figcaption></figure>
+      <figure><a href="screenshots/15-drag-and-drop.png"><img src="screenshots/15-drag-and-drop.png" alt="Drag and drop a file onto a folder"></a><figcaption>Drag‑and‑drop — a floating ghost follows the cursor.</figcaption></figure>
+      <figure><a href="screenshots/12-console.png"><img src="screenshots/12-console.png" alt="DOS-style Console command shell"></a><figcaption>Console — a DOS‑style command shell with real built‑ins.</figcaption></figure>
+      <figure><a href="screenshots/13-screensaver.png"><img src="screenshots/13-screensaver.png" alt="Plasma screensaver"></a><figcaption>Screensavers — a demoscene plasma (also starfield &amp; Mystify).</figcaption></figure>
+      <figure><a href="screenshots/14-welcome.png"><img src="screenshots/14-welcome.png" alt="Welcome first-run tour"></a><figcaption>The Welcome tour — first‑boot links to the key apps.</figcaption></figure>
+      <figure><a href="screenshots/09-start-menu.png"><img src="screenshots/09-start-menu.png" alt="Start-style launcher menu"></a><figcaption>The Start‑style launcher menu.</figcaption></figure>
+    </div>
+  </div>
+</section>
+
+<section id="tech">
+  <div class="wrap">
+    <h2><span class="k">#</span>Technical</h2>
+    <p class="lead">A small, layered design in portable C. Nothing above the platform layer
+      touches the hardware — which is what lets the same stack build on DOS and on a host.</p>
+    <div class="grid2">
+      <div class="card">
+        <h3 style="margin-top:0">The stack we used</h3>
+        <ul class="feat">
+          <li><b>C (strict C89)</b> for the portable core; Watcom‑compatible</li>
+          <li><b>Open Watcom</b> for the DOS target (DOS/4GW, 32‑bit protected mode)</li>
+          <li>Any C89 compiler for the <b>headless host</b> build (CI + screenshots)</li>
+          <li>Small Python helpers author fonts/icons offline</li>
+          <li>Zero runtime dependencies; bundled <b>Spleen</b> font (BSD), optional <b>Tango</b> icons</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3 style="margin-top:0">The rendering model</h3>
+        <p style="margin-top:0">The whole UI composites into one <b>32‑bit XRGB back buffer</b>
+        in system RAM. Only <code>present()</code> converts the dirty rectangles to real
+        hardware — a search‑free <b>3‑3‑2 palette</b> at 8bpp or <b>RGB565</b> at 16bpp.
+        No per‑pixel alpha: a 1‑bit magenta color key for icons/cursors and cheap edge‑strip
+        shadows keep XP‑style chrome inside a period memory budget.</p>
+        <p style="margin-bottom:0"><b>Verified</b> by 1,211 host unit‑test checks, nine end‑to‑end scenes, a strict‑C89
+        (Watcom) lint over every portable source, and a golden‑screenshot pipeline.</p>
+      </div>
+    </div>
+    <p style="margin:16px 0 0;color:var(--muted)">Six layers: Platform → System → Graphics →
+      Window Manager → UI → Shell → Apps. Extensible via a documented <code>.CAPP</code> add‑on ABI.</p>
+  </div>
+</section>
+
+<section id="roadmap">
+  <div class="wrap">
+    <h2><span class="k">#</span>Roadmap</h2>
+    <div class="grid3">
+      <div class="card">
+        <h3 style="margin-top:0">Now — v0.1.0</h3>
+        <ul class="feat">
+          <li>Bootable, themeable desktop</li>
+          <li>WM, UI toolkit, virtual desktops, snapping</li>
+          <li>20+ apps, incl. XP file manager &amp; media player</li>
+          <li>457 tests + golden screenshots</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3 style="margin-top:0">Next — Phase 2–3</h3>
+        <ul class="feat">
+          <li>Drag‑and‑drop in the file manager</li>
+          <li>Real Sound Blaster DAC audio streaming</li>
+          <li>ARP/IP/UDP/TCP over the packet‑driver seam</li>
+          <li>Downloadable theme &amp; icon packs</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3 style="margin-top:0">Later — Phase 4+</h3>
+        <ul class="feat">
+          <li>Friendly installer + bootable CD/USB image</li>
+          <li>A catalog for <code>.CAPP</code> add‑ons</li>
+          <li>A small third‑party SDK</li>
+          <li>Localization &amp; low‑end tuning</li>
+        </ul>
+      </div>
+    </div>
+    <p style="margin:16px 0 0;color:var(--muted)"><b>The dream:</b> an original desktop a
+      community can extend — where a <code>.CAPP</code> you wrote on a modern laptop drops onto
+      a 386 and just runs, and the whole thing still fits on a couple of floppies.</p>
+  </div>
+</section>
+
+<section id="press">
+  <div class="wrap">
+    <h2><span class="k">#</span>Press release &amp; assets</h2>
+    <p class="lead">Everything here is cleared for editorial use. Please credit
+      <b>Tombatossals Softworks</b> and link the project.</p>
+    <div class="card files">
+      <p style="margin-top:0"><b>This kit as one file:</b>
+        <a href="CastaliaOS-98-PE-PressKit.pdf">Download the press kit (PDF)</a></p>
+      <p style="margin-top:0"><b>Documents:</b>
+        <a href="fact-sheet.md">Fact sheet</a>
+        <a href="description.md">Descriptions</a>
+        <a href="features.md">Features</a>
+        <a href="technical.md">Technical</a>
+        <a href="roadmap.md">Roadmap</a>
+        <a href="history.md">History</a>
+        <a href="press-release.md">Press release</a>
+        <a href="contact.md">Contact</a>
+      </p>
+      <p style="margin-bottom:0"><b>Logos:</b>
+        <a href="logo/castaliaos-logo.svg">Logo (SVG)</a>
+        <a href="logo/castaliaos-logo.png">Logo (PNG)</a>
+        <a href="logo/castaliaos-logo-dark.png">Logo — dark bg (PNG)</a>
+        <a href="logo/castaliaos-icon-256.png">Crest icon 256</a>
+        <a href="logo/castaliaos-icon-64.png">Crest icon 64</a>
+      </p>
+    </div>
+  </div>
+</section>
+
+<section id="contact" style="border-bottom:none">
+  <div class="wrap">
+    <div class="cta">
+      <div>
+        <div style="font-size:1.25rem;font-weight:800">Get in touch</div>
+        <div class="em">Review builds, interviews, and extra assets on request.</div>
+      </div>
+      <div>
+        <a class="btn" href="mailto:hello@tombatossalssoftworks.com">hello@tombatossalssoftworks.com</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <p><b>CastaliaOS 98 PE</b> — by Dave Abellan &amp; Claudio di Castello ·
+      © Tombatossals Softworks. Free &amp; open source (MIT).
+      <a href="https://tombatossalssoftworks.com">tombatossalssoftworks.com</a></p>
+    <p style="margin:0">CastaliaOS is an original work. It is not Microsoft Windows and contains
+      no Microsoft code, artwork, or branding.</p>
+  </div>
+</footer>
+
+</body>
+</html>

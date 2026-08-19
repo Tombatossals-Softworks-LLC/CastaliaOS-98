@@ -1,0 +1,13 @@
+# Auto detect text files and perform LF normalization
+* text=auto
+
+# Binary media / assets must never be line-ending normalized.
+*.wav binary
+*.WAV binary
+*.bmp binary
+*.BMP binary
+*.png binary
+*.gif binary
+*.webm binary
+*.ico binary
+*.pdf binary

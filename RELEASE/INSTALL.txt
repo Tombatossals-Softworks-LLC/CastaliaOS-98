@@ -1,0 +1,24 @@
+CastaliaOS 98 PE -- install notes (RELEASE)
+===========================================
+
+This RELEASE tree is the fully compiled product, ready to run. Unlike a
+source build, the DOS/4GW extender is already bundled -- there is nothing
+extra to supply.
+
+1. Copy the CASTALIA\ folder to the root of your DOS drive, so it lives at
+   C:\CASTALIA (BIN, APPS, THEMES, SYS, ...). BIN already contains
+   CASTALIA.EXE, CBOOT.EXE, INSTALL.EXE and DOS4GW.EXE.
+
+2. Boot integration. Either run the bundled INSTALL.EXE (it backs up your
+   CONFIG.SYS / AUTOEXEC.BAT and adds the Castalia boot block), or merge the
+   provided CONFIG.SYS and AUTOEXEC.BAT templates by hand.
+
+3. (Optional) Mouse. For an INT 33h pointer, load a DOS mouse driver (e.g.
+   CuteMouse / CTMOUSE.EXE) before CBOOT -- uncomment the line in AUTOEXEC.BAT.
+   The desktop is fully keyboard-navigable without one.
+
+4. Start it. AUTOEXEC.BAT calls C:\CASTALIA\BIN\CBOOT.EXE, or run that
+   yourself (add /safe for Safe Mode).
+
+Recovery: press F5 at boot to skip CONFIG.SYS/AUTOEXEC.BAT, or F8 to step
+through them, then edit C:\CASTALIA\SYS\CASTALIA.INI. See RECOVERY.md.

@@ -1,0 +1,108 @@
+name: CI
+
+# Three independent tracks, matching docs/BUILDING.md:
+#   1. host-build  - the portable stack + host backend (gcc & clang): C89 lint,
+#                    build, unit tests, and a rendered demo screenshot.
+#   2. dos-build   - the REAL product: Open Watcom compiles Makefile.dos into
+#                    CASTALIA.EXE / CBOOT.EXE / INSTALL.EXE, uploaded as artifacts.
+#   3. kernel-lab  - the native-kernel research image (NASM), boot-tested in QEMU.
+
+# A push to a branch that has an open PR fires BOTH events, so an unqualified
+# `push:` plus `pull_request:` ran the whole matrix TWICE for every commit --
+# double the Actions minutes for identical results. Branch work is covered by
+# the pull_request event; push only guards the default branch.
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+# Pushing several commits in a row leaves older runs grinding away on results
+# nobody will read. Keep the newest run per ref and cancel the rest.
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  host-build:
+    name: host build (${{ matrix.cc }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        cc: [gcc, clang]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Toolchain versions
+        run: |
+          ${{ matrix.cc }} --version
+          make --version
+
+      - name: C89 portability lint (Open Watcom guard)
+        run: make CC=${{ matrix.cc }} lint
+
+      - name: Build host shell
+        run: make CC=${{ matrix.cc }} all
+
+      - name: Unit tests
+        run: make CC=${{ matrix.cc }} test
+
+      - name: Render demo desktop
+        run: make CC=${{ matrix.cc }} run
+
+      - name: Upload desktop screenshot
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: castalia-desktop-${{ matrix.cc }}
+          path: build/castalia.bmp
+          if-no-files-found: warn
+
+  dos-build:
+    name: DOS product (Open Watcom)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Open Watcom
+        uses: open-watcom/setup-watcom@v0
+        with:
+          version: "2.0"
+
+      - name: Build the DOS product (CASTALIA.EXE, CBOOT.EXE, INSTALL.EXE)
+        run: |
+          # The setup action exports WATCOM + PATH but not INCLUDE; point the
+          # compiler at Open Watcom's own headers (Makefile.dos also does this
+          # via -I$(%WATCOM)/h, this is belt-and-suspenders).
+          export INCLUDE="$WATCOM/h"
+          wmake -f Makefile.dos
+
+      - name: Show outputs
+        run: ls -la dist/cdroot/CASTALIA/BIN/
+
+      - name: Upload DOS binaries
+        uses: actions/upload-artifact@v4
+        with:
+          name: castalia-dos-exe
+          path: dist/cdroot/CASTALIA/BIN/*.exe
+          if-no-files-found: error
+
+  kernel-lab:
+    name: kernel-lab (NASM + QEMU boot)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install NASM + QEMU
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y nasm qemu-system-x86
+
+      - name: Assemble the two-stage image
+        run: make -C kernel-lab image
+
+      - name: Boot smoke test (PIT IRQ0 + PS/2 IRQ1)
+        run: sh kernel-lab/smoke_test.sh

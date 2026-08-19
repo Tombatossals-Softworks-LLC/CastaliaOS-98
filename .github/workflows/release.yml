@@ -1,0 +1,75 @@
+name: Release
+
+# Publish a downloadable CastaliaOS 98 PE release when a version tag is pushed.
+# Building the real DOS product with Open Watcom, assembling the install tree
+# into a ZIP, and attaching it to a GitHub Release -- so the .exe are a stable,
+# named download, not just a per-run CI artifact.
+#
+#   git tag v0.1.0 && git push origin v0.1.0
+
+on:
+  push:
+    tags:
+      - 'v*'
+  # Also fire on demand with an explicit version, so a release can be cut
+  # without pushing a tag ref (gh creates the tag at the checked-out commit).
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Release tag to create (e.g. v0.1.0-preview1)'
+        required: true
+
+permissions:
+  contents: write        # required for gh release create
+
+jobs:
+  release:
+    name: Build DOS product + publish release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Resolve version
+        id: ver
+        run: |
+          V="${{ github.event.inputs.version }}"
+          [ -n "$V" ] || V="${GITHUB_REF_NAME}"
+          echo "ver=$V" >> "$GITHUB_OUTPUT"
+          echo "Release version: $V"
+
+      - name: Set up Open Watcom
+        uses: open-watcom/setup-watcom@v0
+        with:
+          version: "2.0"
+
+      - name: Build the DOS product (CASTALIA.EXE, CBOOT.EXE, INSTALL.EXE)
+        run: |
+          export INCLUDE="$WATCOM/h"
+          wmake -f Makefile.dos
+          ls -la dist/cdroot/CASTALIA/BIN/
+
+      - name: Assemble the release package
+        run: sh tools/package_release.sh "${{ steps.ver.outputs.ver }}"
+
+      - name: Publish GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VER: ${{ steps.ver.outputs.ver }}
+        run: |
+          # A hyphenated tag (v0.1.0-rc1, -preview) or any 0.x version is a
+          # pre-release; a clean vMAJOR.MINOR.PATCH with MAJOR>=1 is a full one.
+          PRE=""
+          case "$VER" in
+            *-*)      PRE="--prerelease" ;;   # e.g. v0.1.0-preview1
+            v0.*)     PRE="--prerelease" ;;   # pre-1.0 is inherently preview
+          esac
+          # On workflow_dispatch the tag may not exist yet; gh creates it at the
+          # checked-out commit. --target pins it to this ref for that case.
+          gh release create "$VER" \
+            --repo "${GITHUB_REPOSITORY}" \
+            --target "${GITHUB_SHA}" \
+            --title "CastaliaOS 98 PE $VER" \
+            --notes-file dist/RELEASE_NOTES.md \
+            $PRE \
+            dist/castalia-98-pe-*.zip

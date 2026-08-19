@@ -1,0 +1,42 @@
+name: Maintenance
+
+# On-demand repo housekeeping. Today: delete a GitHub Release and its tag
+# (e.g. a stale pre-release superseded by a newer one). Runs with the
+# workflow's own token, so no personal credentials are involved.
+#
+#   Actions -> Maintenance -> Run workflow -> task: delete-release, tag: vX.Y.Z
+
+on:
+  workflow_dispatch:
+    inputs:
+      task:
+        description: 'Maintenance task to run'
+        required: true
+        type: choice
+        options:
+          - delete-release
+      tag:
+        description: 'Release tag the task operates on (e.g. v0.1.0-preview1)'
+        required: true
+
+permissions:
+  contents: write        # gh release delete + tag cleanup
+
+jobs:
+  maintenance:
+    name: ${{ github.event.inputs.task }} ${{ github.event.inputs.tag }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Delete release + tag
+        if: ${{ github.event.inputs.task == 'delete-release' }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.event.inputs.tag }}
+        run: |
+          echo "Deleting release '$TAG' (and its tag) from ${GITHUB_REPOSITORY}"
+          gh release delete "$TAG" \
+            --repo "${GITHUB_REPOSITORY}" \
+            --cleanup-tag \
+            --yes
+          echo "Done. Remaining releases:"
+          gh release list --repo "${GITHUB_REPOSITORY}"

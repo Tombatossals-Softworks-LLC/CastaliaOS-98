@@ -1,0 +1,27 @@
+Tango Icon Library
+==================
+
+Used by CastaliaOS 98 PE as the default desktop/toolbar/Quick Launch icon pack
+(assets/icons/tango/, installed to C:\CASTALIA\ICONS\TANGO). The icons were
+downsized to the CastaliaOS keyed-BMP convention with tools/png2bmp.py; the
+artwork is unmodified in content.
+
+Source (rasterized PNGs, flattened naming):
+  https://github.com/nigeltao/tango-icon-library-pngs
+Upstream project:
+  http://tango.freedesktop.org/Tango_Icon_Library
+Original tarball the mirror copied from:
+  http://tango.freedesktop.org/releases/tango-icon-theme-0.8.90.tar.gz
+
+
+License (COPYING, verbatim)
+---------------------------
+The icons in this repository are herefore released into the Public Domain.
+
+
+Notes
+-----
+The Tango base icon theme was released into the Public Domain in 2009 (it was
+previously under Creative Commons Attribution-ShareAlike). No attribution is
+legally required. As a courtesy, CastaliaOS credits the Tango Desktop Project
+for the artwork; please keep this notice with any redistribution.

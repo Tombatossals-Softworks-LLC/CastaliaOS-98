@@ -1,0 +1,46 @@
+# =====================================================================
+#  bochs_castalia.bxrc - Bochs configuration for hardware-level debugging
+#  of CastaliaOS 98 PE on a 440BX-class profile.
+#
+#  Bochs is slower than QEMU but its detailed device logging is useful for
+#  chasing VESA/VBE and PS/2 behavior before touching the real IBM machine.
+#  See docs/TESTING.md.
+#
+#  Requires: a FreeDOS hard-disk image 'castalia.img' (FAT16/FAT32) with the
+#  CastaliaOS files under C:\CASTALIA and AUTOEXEC.BAT calling CBOOT, plus a
+#  VGABIOS with VBE support (e.g. the LGPL vgabios-lgpl / Bochs VBE BIOS).
+#
+#  Adjust ROM/VGA BIOS paths to your Bochs installation.
+# =====================================================================
+
+# --- CPU / memory: Pentium II-ish, 128 MB (matches the target) ---
+cpu: model=pentium_mmx, count=1, ips=90000000
+megs: 128
+
+# --- BIOS / VGA BIOS (paths are examples; edit for your install) ---
+romimage:    file=$BXSHARE/BIOS-bochs-latest
+vgaromimage: file=$BXSHARE/VGABIOS-lgpl-latest
+
+# --- Display: Bochs VBE gives VESA modes the DOS backend needs ---
+vga: extension=vbe
+
+# --- Storage: IDE hard disk image ---
+ata0: enabled=1, ioaddr1=0x1f0, ioaddr2=0x3f0, irq=14
+ata0-master: type=disk, path="castalia.img", mode=flat
+
+boot: disk
+
+# --- Input: PS/2 keyboard + mouse (first-class per the hardware profile) ---
+keyboard: type=mf, serial_delay=250
+mouse: enabled=1, type=ps2
+
+# --- Optional devices (kept off; the desktop never requires them) ---
+# sb16: enabled=1
+# ne2k: enabled=1
+
+# --- Logging: verbose device info for debugging ---
+log: bochsout.txt
+panic: action=ask
+error: action=report
+info: action=report
+debug: action=ignore

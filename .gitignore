@@ -1,0 +1,46 @@
+# Build output
+/build/
+*.o
+*.obj
+*.exe
+*.err
+*.map
+
+# Screenshots / generated media
+*.bmp
+castalia*.png
+
+# ...but the shipped desktop icon pack is committed as keyed BMPs
+# (rebake with `make gen-iconpack`). Force it tracked despite *.bmp above.
+!/assets/icons/**/*.bmp
+
+# The press kit ships committed logos + screenshots (some match castalia*.png).
+!/presskit/**
+
+# Emulator artifacts
+bochsout.txt
+*.img
+*.iso
+
+# kernel-lab assembled output (research track)
+/kernel-lab/*.bin
+
+# Release packaging output (produced by tools/package_release.sh in CI)
+/dist/pkg/
+/dist/*.zip
+/dist/RELEASE_NOTES.md
+
+# The committed, fully-compiled RELEASE/ build ships the DOS .EXE + DOS4GW.EXE.
+# Force it tracked despite the *.exe / *.obj rules above (matters where
+# core.ignorecase makes *.exe match .EXE, e.g. macOS/Windows checkouts).
+!/RELEASE/
+!/RELEASE/**
+
+# Editor / OS cruft
+*.swp
+*~
+.DS_Store
+/build-san/
+
+# a run in the source tree leaves its session log here
+LOGS/

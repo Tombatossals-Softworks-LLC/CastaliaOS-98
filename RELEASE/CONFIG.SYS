@@ -1,0 +1,20 @@
+REM ====================================================================
+REM  CONFIG.SYS (template) for a CastaliaOS 98 PE / FreeDOS boot.
+REM
+REM  Minimal and repairable. The installer backs up your existing
+REM  CONFIG.SYS (CONFIG.CB_) before adding anything. CastaliaOS itself only
+REM  needs conventional DOS services plus a DPMI host (the DOS/4GW extender
+REM  ships with the shell). HIMEM/upper-memory lines below are optional but
+REM  recommended for a healthy 128 MB machine.
+REM
+REM  Safe recovery: if the machine will not boot, press F5 to skip CONFIG.SYS
+REM  and AUTOEXEC.BAT entirely, or F8 to step through lines. See RECOVERY.md.
+REM ====================================================================
+
+DEVICE=C:\FDOS\BIN\HIMEMX.EXE
+DOS=HIGH,UMB
+FILES=40
+BUFFERS=20
+LASTDRIVE=Z
+
+REM No sound, network, or USB driver is required to reach the desktop.

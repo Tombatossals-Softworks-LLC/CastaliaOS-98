@@ -1,0 +1,374 @@
+# =====================================================================
+#  CastaliaOS 98 PE - DOS product build (Open Watcom, wmake)
+#
+#  Builds the real 32-bit DOS/4GW executables from the SAME portable upper
+#  stack plus the DOS/VESA platform backend (src/platform/dos). Run under an
+#  Open Watcom environment (owsetenv) with:
+#
+#      wmake -f Makefile.dos
+#
+#  Outputs (in dist/cdroot/CASTALIA/BIN):
+#      CASTALIA.EXE   - the graphical desktop
+#      CBOOT.EXE      - the safe launcher AUTOEXEC.BAT calls
+#
+#  Notes:
+#   - Target: 386+ flat protected mode via the DOS/4GW extender (DOS4GW.EXE
+#     must accompany the binaries; see docs/BUILDING.md for licensing).
+#   - CASTALIA_DOS selects the DOS backend; the host backend is excluded.
+#   - This makefile requires the Open Watcom toolchain and is not exercised
+#     by the portable host build. Validation happens on QEMU/Bochs/hardware
+#     per docs/TESTING.md.
+# =====================================================================
+
+CC  = wcc386
+LD  = wlink
+# -I$(%WATCOM)/h puts Open Watcom's own C headers (dos.h, direct.h, i86.h, ...)
+# on the search path explicitly, so the build works whether or not the INCLUDE
+# environment variable was set by owsetenv (e.g. a bare CI runner where the
+# setup action exports WATCOM + PATH but not INCLUDE).
+CFLAGS = -bt=dos -mf -5r -oaxt -w3 -dCASTALIA_DOS -Iinclude -Isrc/apps -Isrc/platform/dos -I$(%WATCOM)/h
+OUTDIR = dist/cdroot/CASTALIA/BIN
+
+# ---- portable upper stack (identical to the host build) --------------
+CORE_OBJS = &
+  sys_log.obj sys_str.obj sys_mem.obj sys_time.obj sys_crash.obj &
+  snd_common.obj clip.obj &
+  cfg_ini.obj settings.obj &
+  capp.obj capp_scan.obj capp_loader.obj capp_loader_io.obj &
+  capp_host_wm.obj capp_sample.obj net_util.obj &
+  gfx_rect.obj gfx_surface.obj gfx_draw.obj gfx_blit.obj gfx_font.obj &
+  gfx_font_data.obj gfx_font_spleen.obj gfx_palette.obj gfx_bmp.obj gfx_bmp_io.obj &
+  wm_window.obj wm_frame.obj wm_dispatch.obj wm_snap.obj wm_move.obj &
+  ui_button.obj ui_hotpaint.obj ui_menu.obj ui_edit.obj ui_dialog.obj ui_controls.obj &
+  ui_scroll.obj ui_path.obj ui_filedlg.obj &
+  sh_kmove.obj icon_nav.obj sh_theme.obj sh_theme_io.obj sh_cursor.obj sh_desktop.obj sh_iconpack.obj sh_taskbar.obj &
+  sh_launcher.obj sh_context.obj sh_shutdown.obj sh_core.obj sh_anim.obj &
+  sh_logo.obj sh_splash.obj sh_saver.obj sh_tooltip.obj &
+  app_window.obj app_sysinfo.obj app_fileman.obj &
+  app_notepad.obj app_calc.obj app_logview.obj app_control.obj &
+  app_taskman.obj app_paint.obj app_view.obj &
+  app_about.obj app_bench.obj app_media.obj wav.obj &
+  app_clock.obj app_charmap.obj app_props.obj app_net.obj app_theme.obj app_help.obj &
+  app_solitaire.obj app_console.obj app_welcome.obj &
+  calc_core.obj sol_core.obj wrap_core.obj cmap_core.obj fsize_core.obj ring_core.obj fc_core.obj rev_core.obj trash_core.obj card_draw.obj undo_core.obj app_freecell.obj app_reversi.obj mines_core.obj app_mines.obj &
+  sheet_core.obj app_sheet.obj &
+  write_core.obj app_write.obj office_ui.obj &
+  eq_core.obj agenda_core.obj paint_core.obj hex_core.obj thumb_core.obj assoc.obj hist_core.obj &
+  map_core.obj app_diskuse.obj app_compare.obj diff_core.obj grep_core.obj ren_core.obj ren_batch.obj app_archive.obj app_hex.obj lzss_core.obj cz_file.obj lastgood.obj cpu_core.obj mach_core.obj cal_core.obj sys_le.obj sys_home.obj vbe_pick.obj vbe_report.obj vbe_bank.obj sw_core.obj car_core.obj net_stack.obj
+
+# ---- DOS platform backend --------------------------------------------
+DOS_OBJS = &
+  plat_dos.obj vesa.obj mouse.obj keyboard.obj dos_proc.obj dos_dpmi.obj &
+  snd_dos.obj snd_blaster.obj net_pkt.obj
+
+SHELL_OBJS = $(CORE_OBJS) $(DOS_OBJS) main.obj
+
+all: $(OUTDIR)/castalia.exe $(OUTDIR)/cboot.exe $(OUTDIR)/install.exe .SYMBOLIC
+
+# Link directly into the output directory (which ships in the repo). This
+# avoids DOS-only `copy`/`mkdir` recipe commands, so the makefile builds under
+# Open Watcom on a Linux host as well as on DOS/Windows. wlink needs wstub.exe
+# on the PATH ($WATCOM/binw); see docs/BUILDING.md.
+$(OUTDIR)/castalia.exe: $(SHELL_OBJS)
+	$(LD) system dos4g name $^@ file { $(SHELL_OBJS) }
+
+$(OUTDIR)/cboot.exe: cboot.obj
+	$(LD) system dos4g name $^@ file { cboot.obj }
+
+$(OUTDIR)/install.exe: install_core.obj install_main.obj
+	$(LD) system dos4g name $^@ file { install_core.obj install_main.obj }
+
+# ---- compile rules (explicit paths -> flat .obj names) ---------------
+sys_log.obj:     src/sys/sys_log.c
+	$(CC) $(CFLAGS) -fo=$^@ $[@
+sys_str.obj:     src/sys/sys_str.c
+	$(CC) $(CFLAGS) -fo=$^@ $[@
+sys_mem.obj:     src/sys/sys_mem.c
+	$(CC) $(CFLAGS) -fo=$^@ $[@
+sys_time.obj:    src/sys/sys_time.c
+	$(CC) $(CFLAGS) -fo=$^@ $[@
+sys_crash.obj:   src/sys/sys_crash.c
+	$(CC) $(CFLAGS) -fo=$^@ $[@
+snd_common.obj:  src/sys/snd_common.c
+	$(CC) $(CFLAGS) -fo=$^@ $[@
+clip.obj:        src/sys/clip.c
+	$(CC) $(CFLAGS) -fo=$^@ $[@
+cfg_ini.obj:     src/cfg/cfg_ini.c
+	$(CC) $(CFLAGS) -fo=$^@ $[@
+settings.obj:    src/cfg/settings.c
+	$(CC) $(CFLAGS) -fo=$^@ $[@
+capp.obj:        src/capp/capp.c
+	$(CC) $(CFLAGS) -fo=$^@ $[@
+capp_scan.obj:   src/capp/capp_scan.c
+	$(CC) $(CFLAGS) -fo=$^@ $[@
+capp_loader.obj: src/capp/capp_loader.c
+	$(CC) $(CFLAGS) -fo=$^@ $[@
+capp_loader_io.obj: src/capp/capp_loader_io.c
+	$(CC) $(CFLAGS) -fo=$^@ $[@
+capp_host_wm.obj: src/capp/capp_host_wm.c
+	$(CC) $(CFLAGS) -fo=$^@ $[@
+capp_sample.obj: src/capp/capp_sample.c
+	$(CC) $(CFLAGS) -fo=$^@ $[@
+net_util.obj:    src/net/net_util.c
+	$(CC) $(CFLAGS) -fo=$^@ $[@
+gfx_rect.obj:    src/gfx/gfx_rect.c
+	$(CC) $(CFLAGS) -fo=$^@ $[@
+gfx_surface.obj: src/gfx/gfx_surface.c
+	$(CC) $(CFLAGS) -fo=$^@ $[@
+gfx_draw.obj:    src/gfx/gfx_draw.c
+	$(CC) $(CFLAGS) -fo=$^@ $[@
+gfx_blit.obj:    src/gfx/gfx_blit.c
+	$(CC) $(CFLAGS) -fo=$^@ $[@
+gfx_font.obj:    src/gfx/gfx_font.c
+	$(CC) $(CFLAGS) -fo=$^@ $[@
+gfx_font_data.obj: src/gfx/gfx_font_data.c
+	$(CC) $(CFLAGS) -fo=$^@ $[@
+gfx_font_spleen.obj: src/gfx/gfx_font_spleen.c
+	$(CC) $(CFLAGS) -fo=$^@ $[@
+gfx_palette.obj: src/gfx/gfx_palette.c
+	$(CC) $(CFLAGS) -fo=$^@ $[@
+gfx_bmp.obj:     src/gfx/gfx_bmp.c
+	$(CC) $(CFLAGS) -fo=$^@ $[@
+gfx_bmp_io.obj:  src/gfx/gfx_bmp_io.c
+	$(CC) $(CFLAGS) -fo=$^@ $[@
+wm_window.obj:   src/wm/wm_window.c
+	$(CC) $(CFLAGS) -fo=$^@ $[@
+wm_frame.obj:    src/wm/wm_frame.c
+	$(CC) $(CFLAGS) -fo=$^@ $[@
+wm_dispatch.obj: src/wm/wm_dispatch.c
+	$(CC) $(CFLAGS) -fo=$^@ $[@
+wm_snap.obj:     src/wm/wm_snap.c
+	$(CC) $(CFLAGS) -fo=$^@ $[@
+wm_move.obj:     src/wm/wm_move.c
+	$(CC) $(CFLAGS) -fo=$^@ $[@
+ui_button.obj:   src/ui/ui_button.c
+	$(CC) $(CFLAGS) -fo=$^@ $[@
+ui_hotpaint.obj: src/ui/ui_hotpaint.c
+	$(CC) $(CFLAGS) -fo=$^@ $[@
+ui_scroll.obj:   src/ui/ui_scroll.c
+	$(CC) $(CFLAGS) -fo=$^@ $[@
+ui_path.obj:     src/ui/ui_path.c
+	$(CC) $(CFLAGS) -fo=$^@ $[@
+ui_filedlg.obj:  src/ui/ui_filedlg.c
+	$(CC) $(CFLAGS) -fo=$^@ $[@
+ui_menu.obj:     src/ui/ui_menu.c
+	$(CC) $(CFLAGS) -fo=$^@ $[@
+ui_edit.obj:     src/ui/ui_edit.c
+	$(CC) $(CFLAGS) -fo=$^@ $[@
+ui_dialog.obj:   src/ui/ui_dialog.c
+	$(CC) $(CFLAGS) -fo=$^@ $[@
+ui_controls.obj: src/ui/ui_controls.c
+	$(CC) $(CFLAGS) -fo=$^@ $[@
+sh_theme.obj:    src/shell/sh_theme.c
+	$(CC) $(CFLAGS) -fo=$^@ $[@
+sh_theme_io.obj: src/shell/sh_theme_io.c
+	$(CC) $(CFLAGS) -fo=$^@ $[@
+sh_cursor.obj:   src/shell/sh_cursor.c
+	$(CC) $(CFLAGS) -fo=$^@ $[@
+sh_desktop.obj:  src/shell/sh_desktop.c
+	$(CC) $(CFLAGS) -fo=$^@ $[@
+sh_iconpack.obj: src/shell/sh_iconpack.c
+	$(CC) $(CFLAGS) -fo=$^@ $[@
+sh_taskbar.obj:  src/shell/sh_taskbar.c
+	$(CC) $(CFLAGS) -fo=$^@ $[@
+sh_kmove.obj:    src/shell/sh_kmove.c
+	$(CC) $(CFLAGS) -fo=$^@ $[@
+icon_nav.obj:    src/shell/icon_nav.c
+	$(CC) $(CFLAGS) -fo=$^@ $[@
+sh_launcher.obj: src/shell/sh_launcher.c
+	$(CC) $(CFLAGS) -fo=$^@ $[@
+sh_context.obj:  src/shell/sh_context.c
+	$(CC) $(CFLAGS) -fo=$^@ $[@
+sh_shutdown.obj: src/shell/sh_shutdown.c
+	$(CC) $(CFLAGS) -fo=$^@ $[@
+sh_core.obj:     src/shell/sh_core.c
+	$(CC) $(CFLAGS) -fo=$^@ $[@
+sh_anim.obj:     src/shell/sh_anim.c
+	$(CC) $(CFLAGS) -fo=$^@ $[@
+sh_splash.obj:   src/shell/sh_splash.c
+	$(CC) $(CFLAGS) -fo=$^@ $[@
+sh_logo.obj:     src/shell/sh_logo.c
+	$(CC) $(CFLAGS) -fo=$^@ $[@
+sh_saver.obj:    src/shell/sh_saver.c
+	$(CC) $(CFLAGS) -fo=$^@ $[@
+sh_tooltip.obj:  src/shell/sh_tooltip.c
+	$(CC) $(CFLAGS) -fo=$^@ $[@
+app_window.obj:  src/apps/app_window.c
+	$(CC) $(CFLAGS) -fo=$^@ $[@
+app_sysinfo.obj: src/apps/app_sysinfo.c
+	$(CC) $(CFLAGS) -fo=$^@ $[@
+app_fileman.obj: src/apps/app_fileman.c
+	$(CC) $(CFLAGS) -fo=$^@ $[@
+app_notepad.obj: src/apps/app_notepad.c
+	$(CC) $(CFLAGS) -fo=$^@ $[@
+app_calc.obj:    src/apps/app_calc.c
+	$(CC) $(CFLAGS) -fo=$^@ $[@
+app_logview.obj: src/apps/app_logview.c
+	$(CC) $(CFLAGS) -fo=$^@ $[@
+app_control.obj: src/apps/app_control.c
+	$(CC) $(CFLAGS) -fo=$^@ $[@
+app_taskman.obj: src/apps/app_taskman.c
+	$(CC) $(CFLAGS) -fo=$^@ $[@
+app_paint.obj:   src/apps/app_paint.c
+	$(CC) $(CFLAGS) -fo=$^@ $[@
+app_view.obj:    src/apps/app_view.c
+	$(CC) $(CFLAGS) -fo=$^@ $[@
+app_about.obj:   src/apps/app_about.c
+	$(CC) $(CFLAGS) -fo=$^@ $[@
+app_bench.obj:   src/apps/app_bench.c
+	$(CC) $(CFLAGS) -fo=$^@ $[@
+app_media.obj:   src/apps/app_media.c
+	$(CC) $(CFLAGS) -fo=$^@ $[@
+wav.obj:         src/apps/wav.c
+	$(CC) $(CFLAGS) -fo=$^@ $[@
+app_clock.obj:   src/apps/app_clock.c
+	$(CC) $(CFLAGS) -fo=$^@ $[@
+app_net.obj:     src/apps/app_net.c
+	$(CC) $(CFLAGS) -fo=$^@ $[@
+app_theme.obj:   src/apps/app_theme.c
+	$(CC) $(CFLAGS) -fo=$^@ $[@
+app_help.obj:    src/apps/app_help.c
+	$(CC) $(CFLAGS) -fo=$^@ $[@
+app_charmap.obj: src/apps/app_charmap.c
+	$(CC) $(CFLAGS) -fo=$^@ $[@
+app_props.obj:   src/apps/app_props.c
+	$(CC) $(CFLAGS) -fo=$^@ $[@
+app_solitaire.obj: src/apps/app_solitaire.c
+	$(CC) $(CFLAGS) -fo=$^@ $[@
+app_console.obj: src/apps/app_console.c
+	$(CC) $(CFLAGS) -fo=$^@ $[@
+app_welcome.obj: src/apps/app_welcome.c
+	$(CC) $(CFLAGS) -fo=$^@ $[@
+mines_core.obj:  src/apps/mines_core.c
+	$(CC) $(CFLAGS) -fo=$^@ $[@
+calc_core.obj:   src/apps/calc_core.c
+	$(CC) $(CFLAGS) -fo=$^@ $[@
+sol_core.obj:    src/apps/sol_core.c
+	$(CC) $(CFLAGS) -fo=$^@ $[@
+wrap_core.obj:   src/apps/wrap_core.c
+	$(CC) $(CFLAGS) -fo=$^@ $[@
+cmap_core.obj:   src/apps/cmap_core.c
+	$(CC) $(CFLAGS) -fo=$^@ $[@
+fsize_core.obj:  src/apps/fsize_core.c
+	$(CC) $(CFLAGS) -fo=$^@ $[@
+ring_core.obj:   src/apps/ring_core.c
+	$(CC) $(CFLAGS) -fo=$^@ $[@
+fc_core.obj:     src/apps/fc_core.c
+	$(CC) $(CFLAGS) -fo=$^@ $[@
+rev_core.obj:    src/apps/rev_core.c
+	$(CC) $(CFLAGS) -fo=$^@ $[@
+trash_core.obj:  src/apps/trash_core.c
+	$(CC) $(CFLAGS) -fo=$^@ $[@
+diff_core.obj:   src/apps/diff_core.c
+	$(CC) $(CFLAGS) -fo=$^@ $[@
+grep_core.obj:   src/apps/grep_core.c
+	$(CC) $(CFLAGS) -fo=$^@ $[@
+ren_core.obj:    src/apps/ren_core.c
+	$(CC) $(CFLAGS) -fo=$^@ $[@
+ren_batch.obj:   src/apps/ren_batch.c
+	$(CC) $(CFLAGS) -fo=$^@ $[@
+app_compare.obj: src/apps/app_compare.c
+	$(CC) $(CFLAGS) -fo=$^@ $[@
+card_draw.obj:   src/apps/card_draw.c
+	$(CC) $(CFLAGS) -fo=$^@ $[@
+undo_core.obj:   src/apps/undo_core.c
+	$(CC) $(CFLAGS) -fo=$^@ $[@
+app_freecell.obj: src/apps/app_freecell.c
+	$(CC) $(CFLAGS) -fo=$^@ $[@
+app_reversi.obj: src/apps/app_reversi.c
+	$(CC) $(CFLAGS) -fo=$^@ $[@
+app_mines.obj:   src/apps/app_mines.c
+	$(CC) $(CFLAGS) -fo=$^@ $[@
+sheet_core.obj:  src/apps/sheet_core.c
+	$(CC) $(CFLAGS) -fo=$^@ $[@
+app_sheet.obj:   src/apps/app_sheet.c
+	$(CC) $(CFLAGS) -fo=$^@ $[@
+write_core.obj:  src/apps/write_core.c
+	$(CC) $(CFLAGS) -fo=$^@ $[@
+eq_core.obj:     src/apps/eq_core.c
+	$(CC) $(CFLAGS) -fo=$^@ $[@
+agenda_core.obj: src/apps/agenda_core.c
+	$(CC) $(CFLAGS) -fo=$^@ $[@
+paint_core.obj:  src/apps/paint_core.c
+	$(CC) $(CFLAGS) -fo=$^@ $[@
+hex_core.obj:    src/apps/hex_core.c
+	$(CC) $(CFLAGS) -fo=$^@ $[@
+thumb_core.obj:  src/apps/thumb_core.c
+	$(CC) $(CFLAGS) -fo=$^@ $[@
+assoc.obj:       src/apps/assoc.c
+	$(CC) $(CFLAGS) -fo=$^@ $[@
+hist_core.obj:   src/apps/hist_core.c
+	$(CC) $(CFLAGS) -fo=$^@ $[@
+map_core.obj:    src/apps/map_core.c
+	$(CC) $(CFLAGS) -fo=$^@ $[@
+lzss_core.obj:   src/apps/lzss_core.c
+	$(CC) $(CFLAGS) -fo=$^@ $[@
+cz_file.obj:     src/apps/cz_file.c
+	$(CC) $(CFLAGS) -fo=$^@ $[@
+lastgood.obj:    src/cfg/lastgood.c
+	$(CC) $(CFLAGS) -fo=$^@ $[@
+cpu_core.obj:    src/sys/cpu_core.c
+	$(CC) $(CFLAGS) -fo=$^@ $[@
+mach_core.obj:   src/sys/mach_core.c
+	$(CC) $(CFLAGS) -fo=$^@ $[@
+cal_core.obj:    src/sys/cal_core.c
+	$(CC) $(CFLAGS) -fo=$^@ $[@
+sys_le.obj:      src/sys/sys_le.c
+	$(CC) $(CFLAGS) -fo=$^@ $[@
+sys_home.obj:    src/sys/sys_home.c
+	$(CC) $(CFLAGS) -fo=$^@ $[@
+vbe_pick.obj:    src/gfx/vbe_pick.c
+	$(CC) $(CFLAGS) -fo=$^@ $[@
+vbe_report.obj:  src/gfx/vbe_report.c
+	$(CC) $(CFLAGS) -fo=$^@ $[@
+vbe_bank.obj:    src/gfx/vbe_bank.c
+	$(CC) $(CFLAGS) -fo=$^@ $[@
+sw_core.obj:     src/shell/sw_core.c
+	$(CC) $(CFLAGS) -fo=$^@ $[@
+car_core.obj:    src/apps/car_core.c
+	$(CC) $(CFLAGS) -fo=$^@ $[@
+app_diskuse.obj: src/apps/app_diskuse.c
+	$(CC) $(CFLAGS) -fo=$^@ $[@
+app_hex.obj:     src/apps/app_hex.c
+	$(CC) $(CFLAGS) -fo=$^@ $[@
+app_archive.obj: src/apps/app_archive.c
+	$(CC) $(CFLAGS) -fo=$^@ $[@
+net_stack.obj:   src/net/net_stack.c
+	$(CC) $(CFLAGS) -fo=$^@ $[@
+app_write.obj:   src/apps/app_write.c
+	$(CC) $(CFLAGS) -fo=$^@ $[@
+office_ui.obj:   src/apps/office_ui.c
+	$(CC) $(CFLAGS) -fo=$^@ $[@
+main.obj:        src/main.c
+	$(CC) $(CFLAGS) -fo=$^@ $[@
+
+plat_dos.obj:    src/platform/dos/plat_dos.c
+	$(CC) $(CFLAGS) -fo=$^@ $[@
+vesa.obj:        src/platform/dos/vesa.c
+	$(CC) $(CFLAGS) -fo=$^@ $[@
+mouse.obj:       src/platform/dos/mouse.c
+	$(CC) $(CFLAGS) -fo=$^@ $[@
+keyboard.obj:    src/platform/dos/keyboard.c
+	$(CC) $(CFLAGS) -fo=$^@ $[@
+dos_proc.obj:    src/platform/dos/dos_proc.c
+	$(CC) $(CFLAGS) -fo=$^@ $[@
+dos_dpmi.obj:    src/platform/dos/dos_dpmi.c
+	$(CC) $(CFLAGS) -fo=$^@ $[@
+snd_dos.obj:     src/platform/dos/snd_dos.c
+	$(CC) $(CFLAGS) -fo=$^@ $[@
+snd_blaster.obj: src/platform/dos/snd_blaster.c
+	$(CC) $(CFLAGS) -fo=$^@ $[@
+net_pkt.obj:     src/platform/dos/net_pkt.c
+	$(CC) $(CFLAGS) -fo=$^@ $[@
+cboot.obj:       src/boot/cboot.c
+	$(CC) $(CFLAGS) -fo=$^@ $[@
+install_core.obj: src/install/install_core.c
+	$(CC) $(CFLAGS) -fo=$^@ $[@
+install_main.obj: src/install/install_main.c
+	$(CC) $(CFLAGS) -fo=$^@ $[@
+
+clean: .SYMBOLIC
+	del *.obj
+	del castalia.exe
+	del cboot.exe
+	del install.exe
