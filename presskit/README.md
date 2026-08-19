@@ -45,7 +45,7 @@ coverage — please credit **Dave Abellan** and **Claudio di Castello**
 - **Platforms:** Real DOS (386+), emulators (DOSBox, 86Box, PCem, QEMU), plus a headless host build for CI
 - **Price:** Free — open source (MIT)
 - **Status:** In development, public preview — v0.1.0 (MVP / Phase 1)
-- **Written in:** C (portable C89), ~37,800 lines across 145 files
+- **Written in:** C (portable C89), ~69,400 lines across 218 files
 - **Contact:** hello@tombatossalssoftworks.com · tombatossalssoftworks.com
 
 ## Terms of use

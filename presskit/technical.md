@@ -75,7 +75,7 @@ the shell or the hardware — real third‑party extensibility for a retro OS.
 
 ## Footprint
 
-- ~37,800 lines of C across 145 files.
+- ~69,400 lines of C across 218 files.
 - Composited at up to 800×600; internal buffer is 32‑bit, hardware output is
   8‑ or 16‑bit.
 - Designed to idle quietly (cooperative single‑threaded loop, ~60 Hz cap).
