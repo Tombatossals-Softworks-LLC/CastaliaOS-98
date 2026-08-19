@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="docs/media/castalia-mark-256.png" alt="CastaliaOS: a castle on green hills inside a blue C" width="128">
+  <img src="presskit/logo/castaliaos-icon-256.png" alt="CastaliaOS: a castle on green hills inside a blue C" width="128">
 </p>
 
 # CastaliaOS 98 PE — Powerful Edition
@@ -142,9 +142,9 @@ dist/               AUTOEXEC/CONFIG templates + installed C:\CASTALIA layout
 RELEASE/            Fully compiled, ready-to-use build (DOS exes + bundled DOS4GW)
 include/vendor/     Third-party binaries (the licensed DOS4GW.EXE extender)
 assets/themes/      Original theme files
-docs/               Architecture, building, testing, recovery, backlog, legal
+docs/               Architecture, building, testing, recovery, backlog, legal,
+                    the Project Bible, and the source design brief
 kernel-lab/         Isolated native-kernel research track (does not block v1)
-DOCS/               Project Bible and source design brief
 ```
 
 ## Status

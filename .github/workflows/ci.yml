@@ -32,7 +32,7 @@ jobs:
         cc: [gcc, clang]
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Toolchain versions
         run: |
@@ -53,7 +53,7 @@ jobs:
 
       - name: Upload desktop screenshot
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: castalia-desktop-${{ matrix.cc }}
           path: build/castalia.bmp
@@ -64,7 +64,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Set up Open Watcom
         uses: open-watcom/setup-watcom@v0
@@ -83,7 +83,7 @@ jobs:
         run: ls -la dist/cdroot/CASTALIA/BIN/
 
       - name: Upload DOS binaries
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: castalia-dos-exe
           path: dist/cdroot/CASTALIA/BIN/*.exe
@@ -94,7 +94,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Install NASM + QEMU
         run: |

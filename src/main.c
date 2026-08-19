@@ -23,6 +23,9 @@
 #include "castalia/snd.h"
 #include "castalia/sys.h"
 #include "castalia/wm.h"
+/* Not a public header, but the last-known-good decision is taken on every
+ * platform: cfg_apply_lastgood() below runs before either backend's session. */
+#include "../cfg/lastgood.h"
 
 #include <string.h>
 #include <stdlib.h>
@@ -34,7 +37,6 @@
 #include "cz_file.h"
 #include "trash_core.h"
 #include "paint_core.h"   /* PC_UNDO_LEVELS: the canvas-budget scene */
-#include "../cfg/lastgood.h"
 #include "../sys/cpu_core.h"
 #include "castalia/ui.h"
 #include "car_core.h"
@@ -12306,7 +12308,9 @@ int main(int argc, char **argv)
     /* Optional networking: null on host, packet-driver client on DOS. Absent
      * hardware is not an error; System Info reports the device either way.
      * --net-loopback swaps the host's null backend for the simulated wire. */
+#ifdef CASTALIA_HOST
     if (opt.net_loopback) { plat_host_set_loopback(CTRUE); }
+#endif
     net_init();
 
     SYS_LOGI("main", "%s %s (%s) starting", CASTALIA_NAME, CASTALIA_VER_STRING,

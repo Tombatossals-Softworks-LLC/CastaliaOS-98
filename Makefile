@@ -291,7 +291,13 @@ check:
 
 
 
-lint:
+# check_docs.sh reads the check count out of the test runner, so lint needs the
+# binary to exist. It used to only ever run after `make test` (that is the order
+# `make check` uses), which made `make lint` on a clean tree -- and the CI job,
+# which lints before it builds -- fail on a missing build/run_tests rather than
+# on anything about the code. Depending on it says so once, instead of relying
+# on every caller remembering the order.
+lint: $(TESTS_BIN)
 	@CC=$(CC) sh tools/c89_lint.sh
 	@CC=$(CC) sh tools/check_dos_syntax.sh
 	@CC=$(CC) sh tools/check_second_compiler.sh

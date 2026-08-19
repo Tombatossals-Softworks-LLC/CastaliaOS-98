@@ -29,6 +29,17 @@
 #  changing the source. Editing correct code to satisfy a stub header is worse
 #  than not having the stub.
 #
+#  src/main.c is parsed here too, under -DCASTALIA_DOS. It is the one file in
+#  the tree that is allowed to differ per platform, so it is also the one file
+#  whose DOS half nothing else looks at: c89_lint.sh reads it with
+#  CASTALIA_HOST set, check_dos_build.sh matches files and public headers
+#  rather than what a #ifdef actually leaves behind, and the host build never
+#  defines CASTALIA_DOS at all. Both of the errors that broke the first Open
+#  Watcom CI run lived in exactly that gap -- a header included inside the
+#  CASTALIA_HOST block but used outside it, and a call to a host-backend
+#  function from the shared tail -- and each is an ordinary compile error the
+#  moment somebody compiles the file the way the DOS product does.
+#
 #  Usage:  sh tools/check_dos_syntax.sh
 # =====================================================================
 set -e
@@ -47,7 +58,7 @@ INCS="-Iinclude -Isrc/apps -Isrc/platform/dos -Itools/wcshim"
 fail=0
 n=0
 noise=0
-for f in src/platform/dos/*.c; do
+for f in src/platform/dos/*.c src/main.c; do
     n=$((n + 1))
     err="${TMPDIR:-/tmp}/dossyn_$$.err"
     if ! $CC -fsyntax-only -std=gnu89 -DCASTALIA_DOS $INCS $WARN $HARD \
@@ -72,13 +83,14 @@ done
 
 if [ "$fail" -gt 0 ]; then
     echo ""
-    echo "FAIL: $fail DOS backend source(s) do not parse. Open Watcom would"
-    echo "reject them too, and no other check in this repository looks."
+    echo "FAIL: $fail DOS source(s) do not parse. Open Watcom would reject"
+    echo "them too, and no other check in this repository looks."
     exit 1
 fi
 if [ "$noise" -gt 0 ]; then
-    echo "DOS syntax: $n backend sources parse, with $noise warning(s) above."
+    echo "DOS syntax: $n sources parse (backend + main.c), with $noise warning(s) above."
     exit 0
 fi
-echo "DOS syntax OK: all $n backend sources parse (syntax only -- inline"
-echo "               assembly is not checked by anything, anywhere)."
+echo "DOS syntax OK: all $n sources parse under -DCASTALIA_DOS (the backend"
+echo "               plus main.c's DOS half) -- syntax only; inline assembly"
+echo "               is not checked by anything, anywhere."
