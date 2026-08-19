@@ -13,30 +13,33 @@
 #        AUTOEXEC.BAT
 #        README.md  LEGAL.md  THIRD_PARTY_NOTICES.md  RECOVERY.md  INSTALL.txt
 #
-#  DOS4GW.EXE IS bundled (from include/vendor/DOS4GW.EXE) under the DOS/4GW
-#  distribution license held by Tombatossals Softworks LLC -- see LEGAL.md and
+#  DOS4GW.EXE IS bundled -- from include/vendor/DOS4GW.EXE if a copy is
+#  committed, otherwise from the Open Watcom installation that just built the
+#  executables ($WATCOM/binw/dos4gw.exe) -- under the DOS/4GW distribution
+#  license held by Tombatossals Softworks LLC; see LEGAL.md and
 #  THIRD_PARTY_NOTICES.md. The packaged tree therefore runs as-is.
 #
 #  Usage:  tools/package_release.sh <version>     (e.g. v0.1.0)
 #  Output: dist/castalia-98-pe-<version>.zip  +  dist/RELEASE_NOTES.md
 # =====================================================================
 set -e
+# Every path below is repo-root-relative, as the header promises; say so once
+# instead of depending on where the caller happened to be standing.
+cd "$(dirname "$0")/.."
 VER="${1:?usage: package_release.sh <version>}"
 NAME="castalia-98-pe-$VER"
 STAGE="dist/pkg/$NAME"
 BIN="dist/cdroot/CASTALIA/BIN"
-DOS4GW="include/vendor/DOS4GW.EXE"
+. tools/release_common.sh
 
 # The DOS product must be present -- never publish a release without the exes.
 if ! ls "$BIN"/*.exe >/dev/null 2>&1; then
     echo "ERROR: no .exe in $BIN -- run 'wmake -f Makefile.dos' first." >&2
     exit 1
 fi
-# The licensed DOS extender must be present -- the shipped tree runs as-is.
-if [ ! -f "$DOS4GW" ]; then
-    echo "ERROR: $DOS4GW missing -- the licensed DOS/4GW extender is required." >&2
-    exit 1
-fi
+# The extender must be present -- the shipped tree runs as-is.
+DOS4GW="$(find_dos4gw)" || exit 1
+echo "bundling DOS/4GW from $DOS4GW"
 
 rm -rf "dist/pkg"
 mkdir -p "$STAGE"
@@ -50,6 +53,10 @@ done
 
 # Bundle the licensed DOS/4GW extender so the tree runs with no toolchain.
 cp "$DOS4GW" "$STAGE/CASTALIA/BIN/DOS4GW.EXE"
+chmod 0644 "$STAGE/CASTALIA/BIN/DOS4GW.EXE"
+
+# The icon packs the shipped CASTALIA.INI points at.
+stage_icon_packs "$STAGE/CASTALIA"
 
 # Boot templates + docs at the package root. THIRD_PARTY_NOTICES.md ships too:
 # it carries the DOS/4GW redistribution basis the bundled extender relies on.

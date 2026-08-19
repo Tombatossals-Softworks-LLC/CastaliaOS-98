@@ -139,8 +139,10 @@ src/boot/cboot.c    CBOOT.EXE safe launcher
 tests/              Host unit tests
 emulators/          QEMU + Bochs run scripts
 dist/               AUTOEXEC/CONFIG templates + installed C:\CASTALIA layout
-RELEASE/            Fully compiled, ready-to-use build (DOS exes + bundled DOS4GW)
-include/vendor/     Third-party binaries (the licensed DOS4GW.EXE extender)
+RELEASE/            Ready-to-use build tree (fill with tools/make_release_folder.sh
+                    after the Open Watcom build; docs + boot templates ship here)
+include/vendor/     Optional pinned third-party binaries. Absent, the DOS4GW.EXE
+                    extender comes from the Open Watcom install that builds it.
 assets/themes/      Original theme files
 docs/               Architecture, building, testing, recovery, backlog, legal,
                     the Project Bible, and the source design brief

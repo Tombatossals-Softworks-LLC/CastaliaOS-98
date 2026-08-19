@@ -28,8 +28,8 @@ set -e
 cd "$(dirname "$0")/.."
 
 BIN="dist/cdroot/CASTALIA/BIN"
-DOS4GW="include/vendor/DOS4GW.EXE"
 OUT="RELEASE"
+. tools/release_common.sh
 
 # The DOS product must be present -- never assemble a RELEASE without the exes.
 for e in castalia.exe cboot.exe install.exe; do
@@ -38,10 +38,8 @@ for e in castalia.exe cboot.exe install.exe; do
         exit 1
     fi
 done
-if [ ! -f "$DOS4GW" ]; then
-    echo "ERROR: $DOS4GW missing -- the licensed DOS/4GW extender is required." >&2
-    exit 1
-fi
+DOS4GW="$(find_dos4gw)" || exit 1
+echo "bundling DOS/4GW from $DOS4GW"
 
 rm -rf "$OUT"
 mkdir -p "$OUT"
@@ -56,14 +54,13 @@ done
 # Bundle the licensed DOS/4GW extender alongside the executables. This is the
 # whole point of the RELEASE tree: it runs as-is, with no toolchain to install.
 cp "$DOS4GW" "$OUT/CASTALIA/BIN/DOS4GW.EXE"
+chmod 0644 "$OUT/CASTALIA/BIN/DOS4GW.EXE"
 
 # Stage the desktop icon packs (single source of truth: assets/icons/). The
 # shipped INI defaults [Assets] Icons= to ICONS\TANGO. TANGO is the public-
 # domain Tango set (see THIRD_PARTY_NOTICES.md); CASTALIA is the original MIT
 # set. Cleared, the shell falls back to built-in procedural icons.
-mkdir -p "$OUT/CASTALIA/ICONS"
-cp -r assets/icons/tango assets/icons/castalia "$OUT/CASTALIA/ICONS/" 2>/dev/null || true
-cp assets/icons/README.md "$OUT/CASTALIA/ICONS/README.TXT" 2>/dev/null || true
+stage_icon_packs "$OUT/CASTALIA"
 
 # Boot templates + docs at the tree root. THIRD_PARTY_NOTICES.md must travel
 # with the tree: it carries the DOS/4GW redistribution basis that LEGAL.md and
@@ -125,7 +122,7 @@ rm -f "$OUT"/CASTALIA/LOGS/* "$OUT"/CASTALIA/TEMP/* "$OUT"/CASTALIA/TRASH/* 2>/d
 # Dirs that now hold real files don't need a .gitkeep placeholder.
 rm -f "$OUT/CASTALIA/BIN/.gitkeep" "$OUT/CASTALIA/APPS/.gitkeep"
 # Re-seed .gitkeep so the empty runtime dirs survive in git.
-for d in LOGS TEMP TRASH FONTS ICONS HELP DRV; do
+for d in LOGS TEMP TRASH FONTS HELP DRV; do
     [ -d "$OUT/CASTALIA/$d" ] && touch "$OUT/CASTALIA/$d/.gitkeep"
 done
 
