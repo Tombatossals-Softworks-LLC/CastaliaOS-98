@@ -41,7 +41,7 @@ hardware it's paying tribute to."
 
 The project is engineered for honesty as much as nostalgia: nothing above the
 platform layer touches the hardware, which lets the same code develop and
-**unit‑test on a modern host** (7,547 unit checks pass today) while shipping to DOS via
+**unit‑test on a modern host** (7,609 unit checks pass today) while shipping to DOS via
 Open Watcom. It is also extensible — discoverable `.CAPP` add‑on packages appear
 as first‑class launcher apps and run behind a documented ABI, something Windows
 98 SE never offered.

@@ -56,10 +56,10 @@ Legend: ✅ done · 🟡 partial · ⬜ not started
 | **Aurora theme** (XP-Luna glossy chrome: gradient title bars, red close box, gradient taskbar, and a shaded Start **orb** that overhangs the bar, bearing the Castalia mark) — default | ✅ | `src/shell/sh_theme.c`, `sh_taskbar.c`, `src/wm/wm_frame.c`, `gfx_vgradient3`/`gfx_tint` |
 | **UI sound cues** (menu / window open / close, richer startup chime) | ✅ | `include/castalia/snd.h`, `src/sys/snd_common.c`, WM lifecycle hook |
 | **UI animations** (window open/close zoom, launcher menu slide-up) — frame-budgeted, toggleable | ✅ | `src/shell/sh_anim.c`, `[Shell] Animations` |
-| Host unit tests (7547 checks) | ✅ | `tests/*` |
+| Host unit tests (7609 checks) | ✅ | `tests/*` |
 | Host + DOS build systems, boot templates, emulator scripts, CI | ✅ | `Makefile`, `Makefile.dos`, `.github/workflows/ci.yml` |
 
-Verified now: host build compiles clean (`-Wall -Wextra`), 7547 unit tests pass,
+Verified now: host build compiles clean (`-Wall -Wextra`), 7609 unit tests pass,
 the desktop renders at 800×600 and 640×480; the **DOS target builds under Open
 Watcom and boots end-to-end in QEMU** (FreeDOS → DOS/4GW → VESA 800×600×16
 desktop, live clock, INT 16h keyboard, and INT 33h mouse — a click opens a
@@ -385,7 +385,40 @@ the date card above the tray, `--mines-demo` a revealed "2" cell,
   dangerous roots. Portable core (only mkdir/enumerate differ per platform),
   built as INSTALL.EXE (DOS) and `build/install` (host), with a host round-trip
   test suite (`tests/test_install.c`). Remaining: first-run hardware report;
-  upgrade/repair/portable modes.
+  portable mode.
+- ✅ **Repair and upgrade modes** (`install_run_mode`, `INSTALL.EXE repair` /
+  `upgrade`): the Project Bible's acceptance criteria for v1 ask the installer
+  to install, **repair**, **upgrade** and uninstall, and only two of those
+  existed. Adding the other two turned up something worse than a missing
+  feature. `install_run` copied the media over the install root with
+  `install_copy_tree`, which overwrites; the media ships `SYS\CASTALIA.INI`;
+  so re-running the installer -- which is how most people repair a DOS program,
+  and the only thing to try when something breaks -- silently replaced every
+  setting the user had with defaults. The rule this repository states first is
+  "never destroy the user's files", and the installer was the one program that
+  broke it.
+  So the judgement moved into `install_is_user_state()`, a pure function over a
+  relative path that `tests/test_install.c` walks exhaustively: either
+  separator, either case, leading separators, nested paths, and the prefix trap
+  that would have handed `SYSTEM\` to the user because `SYS` is theirs.
+  `install_copy_tree_keep_user()` skips a user file that ALREADY exists --
+  absent is not the same as theirs, or a first install would ship a desktop
+  with no config at all. All three modes copy that way, so the re-install case
+  is fixed whether or not anybody types `repair`.
+  `THEMES` is the one entry that costs something: a shipped theme is never
+  refreshed by an upgrade, because nothing can tell a stale CLASSIC from one
+  somebody spent an evening mixing, and losing the second is far worse than
+  keeping the first. `ICONS` and `APPS` are deliberately NOT user state -- the
+  copy only ever writes files the media carries, so a pack or a `.CAPP` the
+  user added survives either way while the shipped ones do update.
+  What separates the modes is what they refuse. `upgrade` returns
+  `INST_ERR_NOTHING` when `install_is_present()` finds no installation and
+  `INST_ERR_ARG` with no media to upgrade from -- **before** creating anything,
+  because a refusal that left half a `C:\CASTALIA` behind would be worse than
+  the mistake it refused. `repair` needs neither: a tree half-eaten by a disk
+  error is repairable from the installed files alone, and the boot entry it
+  re-adds stays idempotent (the test wipes AUTOEXEC.BAT, repairs twice, and
+  counts exactly one managed block).
 
 ## Phase 4 — Polish & hardware hardening
 - ✅ **Linear-framebuffer VESA fast path** (`vesa.c`): when a mode advertises a

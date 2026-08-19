@@ -22,7 +22,7 @@ Three guiding principles:
 A bootable desktop with a themeable shell, window manager, UI toolkit, four
 virtual desktops, window snapping, and 30+ applications including a Windows
 XP‑style file manager, a Winamp‑style media player, a benchmark suite, and
-Solitaire. Verified by **7,547** unit checks, **74** scenes run end to end, and a
+Solitaire. Verified by **7,609** unit checks, **74** scenes run end to end, and a
 golden‑screenshot pipeline; the DOS product is compiled and linked on every push
 by CI with Open Watcom, and the desktop boots end to end on FreeDOS under QEMU.
 

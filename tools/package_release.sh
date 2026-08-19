@@ -113,7 +113,7 @@ Tombatossals Softworks LLC (see LEGAL.md and THIRD_PARTY_NOTICES.md).
 ## Verified
 
 - DOS product compiled + linked by CI with Open Watcom 2.0 (this release's exes).
-- Portable stack: 7547 unit tests pass on gcc + clang; strict-C89 (Watcom) lint clean.
+- Portable stack: 7609 unit tests pass on gcc + clang; strict-C89 (Watcom) lint clean.
 - kernel-lab image boots in QEMU (PIT IRQ0 + PS/2 IRQ1) under CI.
 - The DOS/VESA desktop has booted end-to-end in QEMU on FreeDOS (see TESTING.md).
 EOF

@@ -74,14 +74,14 @@ Full detail: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 ```sh
 ./build.sh          # builds the host shell, runs unit tests, renders a demo
 # -> build/castalia.bmp   (open in any image viewer)
-# -> build/run_tests      (7547 checks)
+# -> build/run_tests      (7609 checks)
 ```
 
 Or step by step:
 
 ```sh
 make            # build the host shell
-make test       # 7547 unit checks across 58 suites (INI, rect, regions, strings, installer,
+make test       # 7609 unit checks across 58 suites (INI, rect, regions, strings, installer,
                 #   sound, color, .CAPP, net + the ARP/IP/ICMP/UDP stack, clipboard, snapping,
                 #   mines, spreadsheet, word processor, Paint, agenda, EQ, theme, paths,
                 #   thumbnails, associations, calculator, Klondike, word wrap,

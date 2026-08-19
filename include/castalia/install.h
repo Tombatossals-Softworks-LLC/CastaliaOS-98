@@ -27,6 +27,7 @@
 #define INST_ERR_IO      (-2)  /* file open/read/write error               */
 #define INST_ERR_ARG     (-3)  /* bad/empty argument                       */
 #define INST_ERR_REFUSED (-4)  /* refused for safety (e.g. remove "/" )    */
+#define INST_ERR_NOTHING (-5)  /* upgrade: no installation found to upgrade */
 
 /* The marker lines that fence our managed block inside AUTOEXEC.BAT. The
  * uninstaller strips exactly the lines between them (inclusive). */
@@ -43,11 +44,49 @@ typedef struct {
     int         verbose;      /* echo each step                               */
 } InstallOpts;
 
+/*
+ * What the flow below is being asked to do. The steps are nearly the same in
+ * all three cases -- which is the point: a repair that took a different code
+ * path from an install would be a second installer, tested half as much. What
+ * differs is what each mode REFUSES to do.
+ */
+typedef enum {
+    INST_MODE_INSTALL = 0, /* put it there; works on a bare or existing tree */
+    INST_MODE_REPAIR,      /* put back what is missing; media optional       */
+    INST_MODE_UPGRADE      /* replace the program files; needs both an
+                            * existing installation and media to upgrade from */
+} InstallMode;
+
 /* ---- high-level flows (what main() calls) ---------------------------- */
 
 /* Full install: make the tree, (optionally) copy files from src_root, back up
- * the boot files, and add the managed boot block. Returns INST_OK or a code. */
+ * the boot files, and add the managed boot block. Returns INST_OK or a code.
+ * Equivalent to install_run_mode(o, INST_MODE_INSTALL). */
 int install_run(const InstallOpts *o);
+
+/*
+ * The same flow under an explicit mode.
+ *
+ * Every mode copies with install_copy_tree_keep_user(), so none of them can
+ * overwrite the user's settings or documents -- including a plain re-install,
+ * which is how most people "repair" a DOS program and which used to take
+ * CASTALIA.INI with it.
+ *
+ * INST_MODE_REPAIR recreates any missing directory and re-adds the boot entry,
+ * with or without media: a tree half-deleted by a disk error is repairable
+ * from the installed files alone.
+ *
+ * INST_MODE_UPGRADE returns INST_ERR_ARG with no media to upgrade from, and
+ * INST_ERR_NOTHING when no installation can be found -- telling somebody they
+ * upgraded a machine that had nothing on it is worse than refusing.
+ */
+int install_run_mode(const InstallOpts *o, InstallMode mode);
+
+/* Does an installation appear to be present? True when the install root holds
+ * a CASTALIA.INI or a CBOOT.EXE, or when the managed block is in AUTOEXEC.BAT.
+ * Deliberately generous: the question an upgrade asks is "is there something
+ * here", not "is it intact" -- that is what a repair is for. */
+int install_is_present(const InstallOpts *o);
 
 /* Full uninstall: strip the managed boot block (or restore the pristine
  * backup if present) and, when remove_tree is nonzero, delete install_root.
@@ -81,6 +120,36 @@ int install_restore_file(const char *path);
 
 /* Recursively copy directory tree 'src' into 'dst' (creating 'dst'). */
 int install_copy_tree(const char *src, const char *dst);
+
+/*
+ * As install_copy_tree, except a file the user owns is never overwritten: if
+ * install_is_user_state() says so and the destination already exists, the
+ * source copy is skipped. Absent ones are still created, so a first install
+ * still gets its CASTALIA.INI and its default theme.
+ */
+int install_copy_tree_keep_user(const char *src, const char *dst);
+
+/*
+ * Is 'rel' -- a path relative to the install root -- state the USER owns,
+ * rather than program files the installation media provides?
+ *
+ * The whole judgement is which top-level directory the path starts in, so it
+ * is a pure function over a string and tests/test_install.c can walk every
+ * case rather than the two somebody thinks of. Case-insensitive and accepting
+ * either separator, because it is asked about DOS paths from host code.
+ *
+ * SYS holds CASTALIA.INI. LOGS, TEMP and TRASH are written as the system
+ * runs. PHOTOS takes screenshots, DOCS the office apps' documents, and THEMES
+ * anything the theme editor saves. THEMES is the one that costs something: a
+ * shipped theme is never refreshed by an upgrade, because there is no way to
+ * tell a stale CLASSIC from one the user spent an evening mixing, and losing
+ * the second is far worse than keeping the first.
+ *
+ * ICONS and APPS are deliberately NOT user state. The copy only ever writes
+ * files the media actually carries, so an icon pack or a .CAPP the user added
+ * is untouched either way, while the packs that ship do get updated.
+ */
+int install_is_user_state(const char *rel);
 
 /* Recursively delete directory tree 'root'. Refuses obviously dangerous roots
  * (empty, "/", a bare drive like "C:\\") to avoid a catastrophic wipe. */
