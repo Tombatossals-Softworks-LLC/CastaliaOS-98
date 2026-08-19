@@ -347,7 +347,7 @@ defaults). See [RECOVERY.md](RECOVERY.md) for repair procedures.
 | Output | Track | Produced by | What it is |
 |--------|-------|-------------|------------|
 | `build/castalia` | Host | `make` / `make all` | The shell driven by the headless host backend. |
-| `build/run_tests` | Host | `make test` | The unit-test runner (7547 checks across 58 suites). |
+| `build/run_tests` | Host | `make test` | The unit-test runner (7609 checks across 58 suites). |
 | `build/castalia.bmp` | Host | `make run` | 24-bit BMP of the demo desktop (800x600 by default). |
 | `build/castalia_WxH.bmp` | Host | `tools/run_host.sh W H` | BMP at a chosen resolution. |
 | `build/LOGS/castalia.log` | Host | any run | Rotating session log (rotates at 512 KB). |
@@ -369,7 +369,7 @@ defaults). See [RECOVERY.md](RECOVERY.md) for repair procedures.
   given by `--shot`; `make run` uses `build/castalia.bmp` with
   `CASTALIA_HOME=build`. Ensure `build/` is writable.
 - *Tests fail* — `build/run_tests` prints `N checks, M failures`; a healthy
-  tree reports `7547 checks, 0 failures` and `ALL PASS`.
+  tree reports `7609 checks, 0 failures` and `ALL PASS`.
 
 **DOS build**
 

@@ -10,6 +10,7 @@
  */
 #include "castalia/install.h"
 
+#include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -36,6 +37,15 @@ static const char *const INST_SUBDIRS[] = {
     "HELP", "APPS", "DRV", "TEMP", "TRASH"
 };
 #define INST_SUBDIR_COUNT ((int)(sizeof(INST_SUBDIRS) / sizeof(INST_SUBDIRS[0])))
+
+/* The subset of the layout that belongs to the user rather than to the media.
+ * PHOTOS and DOCS are not in INST_SUBDIRS because the shell creates them on
+ * demand; they are listed here because that makes them no less the user's. */
+static const char *const INST_USER_DIRS[] = {
+    "SYS", "LOGS", "TEMP", "TRASH", "THEMES", "PHOTOS", "DOCS"
+};
+#define INST_USER_DIR_COUNT \
+    ((int)(sizeof(INST_USER_DIRS) / sizeof(INST_USER_DIRS[0])))
 
 /* ---------------------------------------------------------------------- */
 /* Small path + file helpers                                              */
@@ -66,6 +76,47 @@ static int inst_exists(const char *path)
 {
     FILE *f = fopen(path, "rb");
     if (f) { fclose(f); return 1; }
+    return 0;
+}
+
+/* Case-insensitive compare of exactly n characters. C89 has no strncasecmp,
+ * and Watcom's stricmp is not portable back to the host build. */
+static int inst_ci_eq_n(const char *a, const char *b, size_t n)
+{
+    size_t i;
+    for (i = 0; i < n; i++) {
+        int ca = tolower((unsigned char)a[i]);
+        int cb = tolower((unsigned char)b[i]);
+        if (ca != cb) { return 0; }
+        if (ca == '\0') { return 1; }
+    }
+    return 1;
+}
+
+int install_is_user_state(const char *rel)
+{
+    const char *p;
+    size_t n;
+    int i;
+
+    if (rel == NULL) { return 0; }
+    while (*rel == '\\' || *rel == '/') { rel++; }
+
+    /* The first component, and only the first: everything below SYS\ is as
+     * much the user's as SYS\CASTALIA.INI is. */
+    p = rel;
+    while (*p != '\0' && *p != '\\' && *p != '/') { p++; }
+    n = (size_t)(p - rel);
+    if (n == 0) { return 0; }
+
+    for (i = 0; i < INST_USER_DIR_COUNT; i++) {
+        /* Compare the WHOLE component. Matching a prefix would make SYSTEM\
+         * the user's because SYS is, and a name is not a namespace. */
+        if (strlen(INST_USER_DIRS[i]) == n &&
+            inst_ci_eq_n(rel, INST_USER_DIRS[i], n)) {
+            return 1;
+        }
+    }
     return 0;
 }
 
@@ -194,7 +245,19 @@ int install_make_tree(const char *root)
 /* Recursive copy                                                         */
 /* ---------------------------------------------------------------------- */
 
-typedef struct { const char *dst; } CopyCtx;
+/*
+ * 'rel' is where we are relative to the destination ROOT, which is the only
+ * thing install_is_user_state can be asked about -- the absolute destination
+ * path cannot answer it, because the install root may be called anything.
+ */
+typedef struct {
+    const char *dst;
+    const char *rel;       /* "" at the root                                */
+    int         keep_user; /* leave a file the user owns exactly as it is   */
+} CopyCtx;
+
+static int inst_copy_tree_rel(const char *src, const char *dst,
+                              const char *rel, int keep_user);
 
 static int copy_entry(const char *src_full, int is_dir, void *user)
 {
@@ -202,6 +265,7 @@ static int copy_entry(const char *src_full, int is_dir, void *user)
     const char *name = src_full;
     const char *p;
     char dst_full[INST_PATH_MAX];
+    char child_rel[INST_PATH_MAX];
 
     /* basename of src_full */
     for (p = src_full; *p; p++) {
@@ -209,13 +273,31 @@ static int copy_entry(const char *src_full, int is_dir, void *user)
     }
     inst_join(dst_full, sizeof(dst_full), ctx->dst, name);
 
+    if (ctx->rel[0] == '\0') {
+        size_t m = strlen(name);
+        if (m >= sizeof(child_rel)) { m = sizeof(child_rel) - 1; }
+        memcpy(child_rel, name, m);
+        child_rel[m] = '\0';
+    } else {
+        inst_join(child_rel, sizeof(child_rel), ctx->rel, name);
+    }
+
     if (is_dir) {
-        return install_copy_tree(src_full, dst_full);
+        return inst_copy_tree_rel(src_full, dst_full, child_rel,
+                                  ctx->keep_user);
+    }
+    /* Absent is not the same as theirs: a first install has no CASTALIA.INI
+     * yet, and refusing to write one would leave the desktop with no config
+     * at all. Only an EXISTING user file is protected. */
+    if (ctx->keep_user && install_is_user_state(child_rel) &&
+        inst_exists(dst_full)) {
+        return INST_OK;
     }
     return install_copy_file(src_full, dst_full);
 }
 
-int install_copy_tree(const char *src, const char *dst)
+static int inst_copy_tree_rel(const char *src, const char *dst,
+                              const char *rel, int keep_user)
 {
     CopyCtx ctx;
     if (src == NULL || dst == NULL || src[0] == '\0' || dst[0] == '\0') {
@@ -223,7 +305,19 @@ int install_copy_tree(const char *src, const char *dst)
     }
     if (inst_mkdir_one(dst) < 0) { return INST_ERR_IO; }
     ctx.dst = dst;
+    ctx.rel = rel;
+    ctx.keep_user = keep_user;
     return inst_walk_dir(src, copy_entry, &ctx);
+}
+
+int install_copy_tree(const char *src, const char *dst)
+{
+    return inst_copy_tree_rel(src, dst, "", 0);
+}
+
+int install_copy_tree_keep_user(const char *src, const char *dst)
+{
+    return inst_copy_tree_rel(src, dst, "", 1);
 }
 
 /* ---------------------------------------------------------------------- */
@@ -393,7 +487,33 @@ static void inst_say(const InstallOpts *o, const char *msg)
     if (o->verbose) { printf("  %s\n", msg); }
 }
 
+int install_is_present(const InstallOpts *o)
+{
+    char path[INST_PATH_MAX];
+    char dir[INST_PATH_MAX];
+
+    if (o == NULL) { return 0; }
+    if (o->install_root != NULL && o->install_root[0] != '\0') {
+        inst_join(dir, sizeof(dir), o->install_root, "SYS");
+        inst_join(path, sizeof(path), dir, "CASTALIA.INI");
+        if (inst_exists(path)) { return 1; }
+        inst_join(dir, sizeof(dir), o->install_root, "BIN");
+        inst_join(path, sizeof(path), dir, "CBOOT.EXE");
+        if (inst_exists(path)) { return 1; }
+    }
+    if (o->sys_root != NULL) {
+        inst_join(path, sizeof(path), o->sys_root, "AUTOEXEC.BAT");
+        if (has_boot_block(path)) { return 1; }
+    }
+    return 0;
+}
+
 int install_run(const InstallOpts *o)
+{
+    return install_run_mode(o, INST_MODE_INSTALL);
+}
+
+int install_run_mode(const InstallOpts *o, InstallMode mode)
 {
     char autoexec[INST_PATH_MAX];
     char config[INST_PATH_MAX];
@@ -404,13 +524,26 @@ int install_run(const InstallOpts *o)
     }
     if (o->sys_root == NULL) { return INST_ERR_ARG; }
 
-    inst_say(o, "Creating C:\\CASTALIA directory tree...");
+    /* An upgrade is the one mode that can be asked for something impossible,
+     * so it is the one mode that checks before it touches anything. */
+    if (mode == INST_MODE_UPGRADE) {
+        if (o->src_root == NULL || o->src_root[0] == '\0') {
+            return INST_ERR_ARG;
+        }
+        if (!install_is_present(o)) { return INST_ERR_NOTHING; }
+    }
+
+    inst_say(o, (mode == INST_MODE_INSTALL)
+                ? "Creating the CASTALIA directory tree..."
+                : "Checking the CASTALIA directory tree...");
     rc = install_make_tree(o->install_root);
     if (rc < 0) { return rc; }
 
     if (o->src_root != NULL && o->src_root[0] != '\0') {
-        inst_say(o, "Copying files from installation media...");
-        rc = install_copy_tree(o->src_root, o->install_root);
+        inst_say(o, (mode == INST_MODE_UPGRADE)
+                    ? "Replacing program files; settings and documents kept..."
+                    : "Copying files from installation media...");
+        rc = install_copy_tree_keep_user(o->src_root, o->install_root);
         if (rc < 0) { return rc; }
     }
 

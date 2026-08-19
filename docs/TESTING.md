@@ -19,7 +19,7 @@ and each layer states what it actually demonstrates.
 
 **What is proven today:**
 
-- **Layer 1 — host unit tests pass.** `make test` reports `7547 checks,
+- **Layer 1 — host unit tests pass.** `make test` reports `7609 checks,
   0 failures` / `ALL PASS`.
 - **Memory safety, on the paths most likely to lose it.** `make memcheck` runs
   the unit tests, the file-format scenes (.CAR, .CZ, BMP, WAV), the tree walk,
@@ -166,7 +166,7 @@ make test        # builds build/run_tests and runs it
 A healthy run ends with:
 
 ```
-7547 checks, 0 failures
+7609 checks, 0 failures
 ALL PASS
 ```
 
@@ -405,7 +405,7 @@ goal — see [RECOVERY.md](RECOVERY.md).
 | 0 DOS build | `wmake -f Makefile.dos` (Open Watcom) | **Proven in CI on every push** — compiles + links `CASTALIA.EXE` / `CBOOT.EXE` / `INSTALL.EXE`, uploaded as the `castalia-dos-exe` artifact |
 | 0b C89 portability | `make lint` (`tools/c89_lint.sh`) | **Proven in CI** — every portable source is strict-C89 clean, so a Watcom-incompatible change fails on host runners first |
 | 0c Ctrl-key encodings | `make lint` (`tools/check_ctrl_keys.sh`) | **Proven** — no shortcut may test the bare ASCII control code, which works on DOS and silently does nothing on the host backend; carries a control line |
-| 1 Host unit tests | `make test` | **Proven in CI (gcc + clang)** — 7547 checks pass |
+| 1 Host unit tests | `make test` | **Proven in CI (gcc + clang)** — 7609 checks pass |
 | 1b End-to-end scenes | `make demos` | 74 scripted scenes drive real windows and check what they changed |
 | 1b kernel-lab boot | `kernel-lab/smoke_test.sh` (NASM + QEMU) | **Proven in CI** — image boots, PIT IRQ0 tick advances, PS/2 IRQ1 scancode read |
 | 2 Host visual smoke | `make run` / `tools/run_host.sh` | **Proven** — desktop renders to BMP |

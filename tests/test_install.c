@@ -164,6 +164,188 @@ void test_install(void)
         CHECK(!file_contains(ae2, "CASTALIA_HOME"));
     }
 
+    /* ---- what belongs to the user -------------------------------------
+     *
+     * A pure decision over a string, so every case a DOS path can take is
+     * walked here rather than the two that occur to somebody at the keyboard.
+     */
+    CHECK(install_is_user_state("SYS\\CASTALIA.INI"));
+    CHECK(install_is_user_state("SYS/CASTALIA.INI"));   /* either separator  */
+    CHECK(install_is_user_state("sys\\castalia.ini"));  /* DOS is caseless   */
+    CHECK(install_is_user_state("SyS\\Deep\\Nested.TXT"));
+    CHECK(install_is_user_state("SYS"));                /* the dir itself    */
+    CHECK(install_is_user_state("\\SYS\\CASTALIA.INI"));/* leading separator */
+    CHECK(install_is_user_state("//TRASH/TRASH.IDX"));
+    CHECK(install_is_user_state("LOGS\\CASTALIA.LOG"));
+    CHECK(install_is_user_state("TEMP\\X.TMP"));
+    CHECK(install_is_user_state("THEMES\\MINE.INI"));
+    CHECK(install_is_user_state("PHOTOS\\SHOT0001.BMP"));
+    CHECK(install_is_user_state("DOCS\\LETTER.DOC"));
+
+    /* Program files the media owns. */
+    CHECK(!install_is_user_state("BIN\\CASTALIA.EXE"));
+    CHECK(!install_is_user_state("ICONS\\TANGO\\CLOCK.BMP"));
+    CHECK(!install_is_user_state("APPS\\HELLO.CAPP"));
+    CHECK(!install_is_user_state("FONTS\\X"));
+    CHECK(!install_is_user_state("HELP\\X"));
+    CHECK(!install_is_user_state("DRV\\X"));
+    CHECK(!install_is_user_state("README.TXT"));        /* at the root       */
+
+    /* A name is not a namespace: matching a prefix would hand SYSTEM\ to the
+     * user because SYS is theirs, and would keep an upgrade from ever
+     * replacing anything inside it. */
+    CHECK(!install_is_user_state("SYSTEM\\X"));
+    CHECK(!install_is_user_state("SY\\X"));
+    CHECK(!install_is_user_state("LOGSX\\X"));
+    CHECK(!install_is_user_state("DOCSX"));
+    CHECK(!install_is_user_state("BINSYS\\X"));
+
+    /* Degenerate input answers "not the user's" rather than crashing. */
+    CHECK(!install_is_user_state(NULL));
+    CHECK(!install_is_user_state(""));
+    CHECK(!install_is_user_state("\\"));
+    CHECK(!install_is_user_state("/"));
+
+    /* ---- a copy that keeps the user's files ---------------------------- */
+    {
+        char media[128], tree[128], f[192], d[192];
+
+        snprintf(media, sizeof(media), "%s/media", SCRATCH);
+        snprintf(tree,  sizeof(tree),  "%s/tree",  SCRATCH);
+        mk(media);
+        snprintf(d, sizeof(d), "%s/SYS", media);  mk(d);
+        snprintf(f, sizeof(f), "%s/SYS/CASTALIA.INI", media);
+        write_file(f, "shipped\n");
+        snprintf(d, sizeof(d), "%s/BIN", media);  mk(d);
+        snprintf(f, sizeof(f), "%s/BIN/CBOOT.EXE", media);
+        write_file(f, "new-program\n");
+        snprintf(d, sizeof(d), "%s/THEMES", media); mk(d);
+        snprintf(f, sizeof(f), "%s/THEMES/CLASSIC.INI", media);
+        write_file(f, "shipped-theme\n");
+
+        /* First copy onto nothing: the user has no config yet, so withholding
+         * one would leave the desktop with no settings at all. */
+        CHECK_EQI(install_copy_tree_keep_user(media, tree), INST_OK);
+        snprintf(f, sizeof(f), "%s/SYS/CASTALIA.INI", tree);
+        CHECK(file_contains(f, "shipped"));
+
+        /* The user then edits their config and their theme. */
+        write_file(f, "MINE\n");
+        snprintf(f, sizeof(f), "%s/THEMES/CLASSIC.INI", tree);
+        write_file(f, "MY-THEME\n");
+        /* ...and the program files go stale. */
+        snprintf(f, sizeof(f), "%s/BIN/CBOOT.EXE", tree);
+        write_file(f, "old-program\n");
+
+        /* Second copy: this is an upgrade. */
+        CHECK_EQI(install_copy_tree_keep_user(media, tree), INST_OK);
+        snprintf(f, sizeof(f), "%s/SYS/CASTALIA.INI", tree);
+        CHECK(file_contains(f, "MINE"));           /* kept                  */
+        CHECK(!file_contains(f, "shipped"));
+        snprintf(f, sizeof(f), "%s/THEMES/CLASSIC.INI", tree);
+        CHECK(file_contains(f, "MY-THEME"));       /* kept                  */
+        snprintf(f, sizeof(f), "%s/BIN/CBOOT.EXE", tree);
+        CHECK(file_contains(f, "new-program"));    /* replaced              */
+        CHECK(!file_contains(f, "old-program"));
+
+        /* The plain copy is what it always was, and that is the difference
+         * the whole feature turns on: it takes the user's config with it. */
+        snprintf(f, sizeof(f), "%s/SYS/CASTALIA.INI", tree);
+        write_file(f, "MINE\n");
+        CHECK_EQI(install_copy_tree(media, tree), INST_OK);
+        CHECK(file_contains(f, "shipped"));
+
+        install_remove_tree(tree);
+        install_remove_tree(media);
+    }
+
+    /* ---- repair and upgrade -------------------------------------------- */
+    {
+        char inst3[128], sys3[128], media[128];
+        char ae3[192], ini[192], f[192], d[192];
+        InstallOpts o;
+
+        snprintf(inst3, sizeof(inst3), "%s/inst3", SCRATCH);
+        snprintf(sys3,  sizeof(sys3),  "%s/sys3",  SCRATCH);
+        snprintf(media, sizeof(media), "%s/media3", SCRATCH);
+        snprintf(ae3,   sizeof(ae3),   "%s/AUTOEXEC.BAT", sys3);
+        snprintf(ini,   sizeof(ini),   "%s/SYS/CASTALIA.INI", inst3);
+        mk(sys3);
+        write_file(ae3, "@ECHO OFF\n");
+
+        mk(media);
+        snprintf(d, sizeof(d), "%s/BIN", media); mk(d);
+        snprintf(f, sizeof(f), "%s/BIN/CBOOT.EXE", media);
+        write_file(f, "v2\n");
+        snprintf(d, sizeof(d), "%s/SYS", media); mk(d);
+        snprintf(f, sizeof(f), "%s/SYS/CASTALIA.INI", media);
+        write_file(f, "defaults\n");
+
+        memset(&o, 0, sizeof(o));
+        o.install_root = inst3;
+        o.sys_root     = sys3;
+        o.src_root     = NULL;
+        o.verbose      = 0;
+
+        /* Nothing is installed yet. */
+        CHECK(!install_is_present(&o));
+
+        /* An upgrade with no media is refused, and refused BEFORE the tree is
+         * created -- a refusal that left a half-built C:\CASTALIA behind would
+         * be worse than the mistake it is refusing. */
+        CHECK_EQI(install_run_mode(&o, INST_MODE_UPGRADE), INST_ERR_ARG);
+        CHECK(!dir_exists(inst3));
+
+        /* An upgrade of a machine with nothing on it says so. */
+        o.src_root = media;
+        CHECK_EQI(install_run_mode(&o, INST_MODE_UPGRADE), INST_ERR_NOTHING);
+        CHECK(!dir_exists(inst3));
+
+        /* Install for real. */
+        CHECK_EQI(install_run_mode(&o, INST_MODE_INSTALL), INST_OK);
+        CHECK(install_is_present(&o));
+        CHECK(file_contains(ini, "defaults"));
+        CHECK(file_contains(ae3, "CASTALIA_HOME"));
+
+        /* The user settles in, and then the disk eats a directory. */
+        write_file(ini, "THEIRS\n");
+        snprintf(d, sizeof(d), "%s/THEMES", inst3);
+        install_remove_tree(d);
+        CHECK(!dir_exists(d));
+
+        /* Repair without media puts the directory back and keeps the config;
+         * it must not need the CD to fix a missing folder. */
+        o.src_root = NULL;
+        CHECK_EQI(install_run_mode(&o, INST_MODE_REPAIR), INST_OK);
+        CHECK(dir_exists(d));
+        CHECK(file_contains(ini, "THEIRS"));
+
+        /* Somebody deletes the boot entry by hand; repair restores exactly
+         * one, not a second copy stacked on the first. */
+        write_file(ae3, "@ECHO OFF\n");
+        CHECK(!file_contains(ae3, "CASTALIA_HOME"));
+        CHECK_EQI(install_run_mode(&o, INST_MODE_REPAIR), INST_OK);
+        CHECK_EQI(count_occ(ae3, INST_BLOCK_BEGIN), 1);
+        CHECK_EQI(install_run_mode(&o, INST_MODE_REPAIR), INST_OK);
+        CHECK_EQI(count_occ(ae3, INST_BLOCK_BEGIN), 1);
+
+        /* Now upgrade from the media: new program files, same settings. */
+        snprintf(f, sizeof(f), "%s/BIN/CBOOT.EXE", inst3);
+        write_file(f, "v1\n");
+        o.src_root = media;
+        CHECK_EQI(install_run_mode(&o, INST_MODE_UPGRADE), INST_OK);
+        CHECK(file_contains(f, "v2"));
+        CHECK(file_contains(ini, "THEIRS"));
+
+        /* And a plain re-install -- how most people "repair" a DOS program --
+         * is no longer a way to lose your settings. */
+        CHECK_EQI(install_run_mode(&o, INST_MODE_INSTALL), INST_OK);
+        CHECK(file_contains(ini, "THEIRS"));
+
+        CHECK_EQI(uninstall_run(&o, 1), INST_OK);
+        install_remove_tree(media);
+    }
+
     /* Tidy up the scratch tree. */
     install_remove_tree(SCRATCH);
 }

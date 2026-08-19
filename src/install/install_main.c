@@ -7,11 +7,16 @@
  * and by a technician installing to a non-C: drive.
  *
  *   INSTALL.EXE                 install to C:\CASTALIA, wire the boot entry
+ *   INSTALL.EXE repair          recreate missing dirs and the boot entry
+ *   INSTALL.EXE upgrade --src Q:\   replace program files, keep settings
  *   INSTALL.EXE uninstall       restore boot files and remove C:\CASTALIA
  *   INSTALL.EXE --root D:\CAST  install to a different drive/dir
  *   INSTALL.EXE --src Q:\       copy program files from the CD/media root
  *   INSTALL.EXE --sysroot D:\   put the boot entry on a different system drive
  *   INSTALL.EXE uninstall --keep   remove the boot entry but keep the files
+ *
+ * No mode overwrites CASTALIA.INI, saved themes, or documents; see
+ * install_is_user_state() in the core.
  *
  * Built for DOS by Makefile.dos and for the host by the top-level Makefile
  * (build/install) so the flow can be exercised without DOS.
@@ -25,7 +30,10 @@
 static void usage(void)
 {
     printf("CastaliaOS 98 PE installer\n");
-    printf("Usage: INSTALL.EXE [uninstall] [options]\n");
+    printf("Usage: INSTALL.EXE [repair|upgrade|uninstall] [options]\n");
+    printf("  repair          recreate missing directories and the boot entry\n");
+    printf("  upgrade         replace program files, keeping your settings\n");
+    printf("  uninstall       restore the boot files and remove the tree\n");
     printf("  --root PATH     install root      (default $CASTALIA_HOME or C:\\CASTALIA)\n");
     printf("  --sysroot PATH  boot-file drive   (default C:\\)\n");
     printf("  --src PATH      copy files from    (installation media, optional)\n");
@@ -37,6 +45,8 @@ static void usage(void)
 int main(int argc, char **argv)
 {
     InstallOpts o;
+    InstallMode mode = INST_MODE_INSTALL;
+    const char *what = "Install";
     int do_uninstall = 0;
     int keep_tree = 0;
     int i;
@@ -55,6 +65,15 @@ int main(int argc, char **argv)
         if (strcmp(a, "uninstall") == 0 || strcmp(a, "/uninstall") == 0 ||
             strcmp(a, "--uninstall") == 0) {
             do_uninstall = 1;
+            what = "Uninstall";
+        } else if (strcmp(a, "repair") == 0 || strcmp(a, "/repair") == 0 ||
+                   strcmp(a, "--repair") == 0) {
+            mode = INST_MODE_REPAIR;
+            what = "Repair";
+        } else if (strcmp(a, "upgrade") == 0 || strcmp(a, "/upgrade") == 0 ||
+                   strcmp(a, "--upgrade") == 0) {
+            mode = INST_MODE_UPGRADE;
+            what = "Upgrade";
         } else if (strcmp(a, "--root") == 0 && i + 1 < argc) {
             o.install_root = argv[++i];
         } else if (strcmp(a, "--sysroot") == 0 && i + 1 < argc) {
@@ -76,7 +95,7 @@ int main(int argc, char **argv)
         }
     }
 
-    printf("CastaliaOS 98 PE - %s\n", do_uninstall ? "Uninstall" : "Install");
+    printf("CastaliaOS 98 PE - %s\n", what);
     printf("  Install root : %s\n", o.install_root);
     printf("  Boot files   : %s\n", o.sys_root);
     if (o.src_root) { printf("  Source media : %s\n", o.src_root); }
@@ -85,17 +104,37 @@ int main(int argc, char **argv)
     if (do_uninstall) {
         rc = uninstall_run(&o, keep_tree ? 0 : 1);
     } else {
-        rc = install_run(&o);
+        rc = install_run_mode(&o, mode);
     }
 
     if (rc == INST_OK) {
         if (do_uninstall) {
             printf("Uninstall complete. Your original boot files are restored.\n");
+        } else if (mode == INST_MODE_REPAIR) {
+            printf("Repair complete. Your settings and documents were kept.\n");
+        } else if (mode == INST_MODE_UPGRADE) {
+            printf("Upgrade complete. Your settings and documents were kept.\n");
         } else {
             printf("Install complete. Reboot to start CastaliaOS 98 PE.\n");
             printf("To undo: INSTALL.EXE uninstall\n");
         }
         return 0;
+    }
+
+    /* The two an upgrade can hit are worth saying in words: the code alone
+     * sends somebody to RECOVERY.md for something that is not a failure. */
+    if (rc == INST_ERR_NOTHING) {
+        fprintf(stderr, "No CastaliaOS installation found at %s.\n",
+                o.install_root);
+        fprintf(stderr, "Nothing was changed. Run INSTALL.EXE (no verb) to "
+                        "install it.\n");
+        return 1;
+    }
+    if (rc == INST_ERR_ARG && mode == INST_MODE_UPGRADE) {
+        fprintf(stderr, "Upgrade needs the installation media: "
+                        "INSTALL.EXE upgrade --src Q:\\\n");
+        fprintf(stderr, "Nothing was changed.\n");
+        return 1;
     }
 
     fprintf(stderr, "FAILED (code %d). Nothing was left half-written; see\n", rc);
