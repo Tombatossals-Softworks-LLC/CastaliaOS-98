@@ -30,6 +30,13 @@ bochsout.txt
 /dist/*.zip
 /dist/RELEASE_NOTES.md
 
+# The licensed DOS/4GW extender is a tracked third-party binary, and
+# tools/package_release.sh refuses to build a release without it. The *.exe
+# rule above would otherwise make `git add` skip it in silence -- which is
+# exactly how it went missing.
+!/include/vendor/
+!/include/vendor/**
+
 # The committed, fully-compiled RELEASE/ build ships the DOS .EXE + DOS4GW.EXE.
 # Force it tracked despite the *.exe / *.obj rules above (matters where
 # core.ignorecase makes *.exe match .EXE, e.g. macOS/Windows checkouts).

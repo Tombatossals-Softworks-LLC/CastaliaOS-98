@@ -8,10 +8,10 @@
 #ifndef CASTALIA_BUILDSTATS_H
 #define CASTALIA_BUILDSTATS_H
 
-#define CASTALIA_STAT_LOC        69449L   /* lines across src/ + include/       */
-#define CASTALIA_STAT_CODE_LOC   61942L   /* .c lines                           */
+#define CASTALIA_STAT_LOC        69453L   /* lines across src/ + include/       */
+#define CASTALIA_STAT_CODE_LOC   61946L   /* .c lines                           */
 #define CASTALIA_STAT_HEADER_LOC 7507L   /* .h lines                           */
-#define CASTALIA_STAT_TOTAL_LOC  82150L   /* incl. tests/ + tools/            */
+#define CASTALIA_STAT_TOTAL_LOC  82154L   /* incl. tests/ + tools/            */
 #define CASTALIA_STAT_TEST_LOC   12245L   /* tests/ lines                     */
 #define CASTALIA_STAT_FILES      218    /* .c + .h files in src/ + include/   */
 #define CASTALIA_STAT_CFILES     147    /* .c files                          */

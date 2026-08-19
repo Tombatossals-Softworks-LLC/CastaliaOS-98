@@ -56,7 +56,13 @@ report() {
 #    to contain no number, and silently skipped -- while being wrong by a factor
 #    of eight. A filter that matches and an extractor that does not is the same
 #    failure as no rule at all, and looks like a passing one.
-for f in README.md docs/BUILDING.md docs/TESTING.md docs/BACKLOG.md; do
+#
+#    tools/package_release.sh is in this list because the release notes it
+#    writes are a published claim like any other, and being in a script rather
+#    than a document is precisely why nobody re-reads it: it said "457 unit
+#    tests" for as long as it had existed.
+for f in README.md docs/BUILDING.md docs/TESTING.md docs/BACKLOG.md \
+         tools/package_release.sh; do
     [ -f "$ROOT/$f" ] || continue
     grep -nE '[0-9]+ (unit )?(checks|tests)' "$ROOT/$f" | \
     grep -vE 'tests/test_[a-z_]*\.c' | \
