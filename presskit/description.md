@@ -26,7 +26,7 @@ golden age of the personal computer — the era of beveled buttons, glossy title
 bars, a Start menu, and an Explorer with a friendly blue task pane — as a
 brand‑new system with no Microsoft code, artwork, or branding anywhere in it.
 
-Written from scratch in portable C (roughly 37,800 lines across 145 files), it
+Written from scratch in portable C (roughly 69,400 lines across 218 files), it
 runs on genuine 386‑class DOS hardware using VESA graphics, a PS/2 mouse, and a
 Sound Blaster or PC speaker, and it develops and unit‑tests on a modern "host"
 build so the whole stack stays verifiable. A six‑layer architecture (platform,

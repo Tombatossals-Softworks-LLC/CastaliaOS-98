@@ -46,9 +46,9 @@ original software renderer and small enough to feel instant.
 
 ## By the numbers
 
-- **~37,800** lines of C across **145** files
-- **1,211** host unit‑test checks, all passing, plus nine scripted end‑to‑end
-  scenes (`make demos`); strict C89 / Open Watcom‑clean lint
+- **~69,400** lines of C across **218** files
+- **7,547** unit checks, all passing, plus **74** scenes run end to end
+  (`make demos`); strict C89 / Open Watcom‑clean lint
 - **6‑layer** architecture: Platform → System → Graphics → Window Manager → UI → Shell → Apps
 - **4** virtual desktops, window snapping/tiling, and a `.CAPP` add‑on format — features Windows 98 SE never had
 - **20+** built‑in applications and system components

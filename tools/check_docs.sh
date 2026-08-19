@@ -35,6 +35,35 @@ if [ -z "$checks" ]; then
     exit 1
 fi
 
+# Every document that states a count. The press kit is here because it is the
+# most public writing in the repository and was the least checked: it claimed
+# "1,211 host test checks", "nine end-to-end scenes", "457 tests pass today" and
+# "37,800 lines across 145 files" against a tree with 7547 checks, 74 scenes and
+# 69,453 lines across 218 files. Being the press kit is exactly why nobody
+# re-derived those, and exactly why being wrong there costs the most.
+#
+# Two lists, and the difference between them is the whole trap. Rule 1 filters
+# hard for lines that talk about the run AS A WHOLE, so docs/BACKLOG.md can be
+# in it: its "449 checks" for one suite and its "2750 checks" quoted from an old
+# README are both filtered out. Rules 2 and 3 have no such filter -- any "N
+# suites" or "N scenes" counts -- and BACKLOG.md is a work LOG, where "49
+# scenes, up from 32" is a true record of a day in the past, not a claim about
+# now. Policing prose that is deliberately historical is how a check starts
+# crying wolf, and a check that cries wolf gets its output skimmed.
+DOCS_WITH_COUNTS="README.md docs/BUILDING.md docs/TESTING.md docs/BACKLOG.md"
+DOCS_WITH_COUNTS="$DOCS_WITH_COUNTS tools/package_release.sh"
+DOCS_WITH_TOTALS="README.md docs/BUILDING.md docs/TESTING.md"
+for pk in "$ROOT"/presskit/*.md; do
+    [ -f "$pk" ] || continue
+    DOCS_WITH_COUNTS="$DOCS_WITH_COUNTS presskit/$(basename "$pk")"
+    DOCS_WITH_TOTALS="$DOCS_WITH_TOTALS presskit/$(basename "$pk")"
+done
+
+# Prose writes 7,547 and **7,547**; neither is a different number from 7547, and
+# a reader that thinks so reports drift that is not there -- or, worse, matches
+# nothing and passes. Every rule below reads through this.
+flatten() { tr -d '*,~' < "$1"; }
+
 # Every place a count is written down, and what it should say.
 report() {
     printf '  STALE %s says %s, should be %s (%s)\n' "$1" "$3" "$2" "$4"
@@ -61,10 +90,10 @@ report() {
 #    writes are a published claim like any other, and being in a script rather
 #    than a document is precisely why nobody re-reads it: it said "457 unit
 #    tests" for as long as it had existed.
-for f in README.md docs/BUILDING.md docs/TESTING.md docs/BACKLOG.md \
-         tools/package_release.sh; do
+for f in $DOCS_WITH_COUNTS; do
     [ -f "$ROOT/$f" ] || continue
-    grep -nE '[0-9]+ (unit )?(checks|tests)' "$ROOT/$f" | \
+    flatten "$ROOT/$f" | \
+    grep -nE '[0-9]+ (unit )?(checks|tests)' | \
     grep -vE 'tests/test_[a-z_]*\.c' | \
     grep -E 'run_tests|make test|unit checks|unit tests|checks, 0 failures|checks pass' | \
     while IFS= read -r line; do
@@ -82,9 +111,9 @@ for f in README.md docs/BUILDING.md docs/TESTING.md docs/BACKLOG.md \
 done
 
 # 2. "N suites" must be the number of suite files.
-for f in README.md docs/BUILDING.md docs/TESTING.md; do
+for f in $DOCS_WITH_TOTALS; do
     [ -f "$ROOT/$f" ] || continue
-    for n in $(grep -oE '[0-9]+ suites' "$ROOT/$f" | grep -oE '^[0-9]+' | sort -u); do
+    for n in $(flatten "$ROOT/$f" | grep -oE '[0-9]+ suites' | grep -oE '^[0-9]+' | sort -u); do
         if [ "$n" != "$suites" ]; then
             report "$f" "$suites" "$n" "test suite files"
         fi
@@ -92,9 +121,9 @@ for f in README.md docs/BUILDING.md docs/TESTING.md; do
 done
 
 # 3. "N scenes" must be the number of demo scenes the harness runs.
-for f in README.md docs/BUILDING.md docs/TESTING.md; do
+for f in $DOCS_WITH_TOTALS; do
     [ -f "$ROOT/$f" ] || continue
-    for n in $(grep -oE '[0-9]+ (demo )?scenes' "$ROOT/$f" | grep -oE '^[0-9]+' | sort -u); do
+    for n in $(flatten "$ROOT/$f" | grep -oE '[0-9]+ (demo )?scenes' | grep -oE '^[0-9]+' | sort -u); do
         if [ "$n" != "$demos" ]; then
             report "$f" "$demos" "$n" "demo scenes"
         fi
@@ -117,10 +146,56 @@ if [ -f "$gen" ]; then
     rm -f "$gen"
 fi
 
+# 5. The press kit's size-of-the-tree claims, against the generated statistics.
+#
+#    These are round numbers on purpose -- "~69,400 lines" reads better in a
+#    fact sheet than 69,453, and pinning them exactly would turn every commit
+#    that adds a line into a press-kit edit nobody would keep up with. So the
+#    rule is a tolerance, not an equality: a claim may round, it may not be
+#    WRONG. A tenth is wide enough that ordinary work never trips it, and
+#    narrow enough to have caught what it was written for -- "37,800 lines
+#    across 145 files" describing a tree of 69,453 across 218, off by 46%.
+loc=$(sed -n 's/^#define CASTALIA_STAT_LOC  *\([0-9][0-9]*\)L.*/\1/p' \
+      "$ROOT/include/castalia/buildstats.h")
+nfiles=$(sed -n 's/^#define CASTALIA_STAT_FILES  *\([0-9][0-9]*\) .*/\1/p' \
+      "$ROOT/include/castalia/buildstats.h")
+
+# claimed, truth -> true when the claim is off by more than a tenth.
+off_by_a_tenth() {
+    claimed=$1
+    truth=$2
+    [ -n "$truth" ] || return 1
+    [ "$truth" -gt 0 ] || return 1
+    if [ "$claimed" -ge "$truth" ]; then
+        d=$((claimed - truth))
+    else
+        d=$((truth - claimed))
+    fi
+    [ $((d * 100 / truth)) -gt 10 ]
+}
+
+for pk in "$ROOT"/presskit/*.md; do
+    [ -f "$pk" ] || continue
+    f="presskit/$(basename "$pk")"
+    for n in $(flatten "$pk" | grep -oE '[0-9]+ lines (of C|across)' \
+               | grep -oE '^[0-9]+' | sort -u); do
+        if off_by_a_tenth "$n" "$loc"; then
+            report "$f" "$loc" "$n" "lines across src/ + include/"
+        fi
+    done
+    for n in $(flatten "$pk" | grep -oE 'across [0-9]+ files' \
+               | grep -oE '[0-9]+' | sort -u); do
+        if off_by_a_tenth "$n" "$nfiles"; then
+            report "$f" "$nfiles" "$n" ".c + .h files in src/ + include/"
+        fi
+    done
+done
+
 [ -f "$ROOT/build/.docfail" ] && fail=$((fail + $(wc -l < "$ROOT/build/.docfail")))
 rm -f "$ROOT/build/.docfail"
 if [ "$fail" -gt 0 ]; then
     echo "DOC COUNTS STALE: $fail place(s). Update them, or the docs are lying." >&2
     exit 1
 fi
-echo "Docs OK: $checks checks, $suites suites, $demos demo scenes, build stats current."
+echo "Docs OK: $checks checks, $suites suites, $demos demo scenes, $loc lines across"
+echo "         $nfiles files -- README, docs/, the press kit and the release notes agree."

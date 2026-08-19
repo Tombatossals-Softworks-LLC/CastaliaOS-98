@@ -19,7 +19,7 @@ and in emulators such as DOSBox, 86Box, and PCem, and it is free and open source
 under the MIT license.
 
 Where most "retro desktops" are themes layered on a modern OS, CastaliaOS is the
-real thing: a from‑scratch stack of roughly **37,800 lines of C** with its own
+real thing: a from‑scratch stack of roughly **69,400 lines of C** with its own
 software renderer, window manager, UI toolkit, and desktop shell. The entire
 interface is composited into a 32‑bit back buffer in system RAM and presented to
 8‑ or 16‑bit hardware with dirty‑rectangle updates — giving it XP‑style glossy
@@ -41,7 +41,7 @@ hardware it's paying tribute to."
 
 The project is engineered for honesty as much as nostalgia: nothing above the
 platform layer touches the hardware, which lets the same code develop and
-**unit‑test on a modern host** (457 tests pass today) while shipping to DOS via
+**unit‑test on a modern host** (7,547 unit checks pass today) while shipping to DOS via
 Open Watcom. It is also extensible — discoverable `.CAPP` add‑on packages appear
 as first‑class launcher apps and run behind a documented ABI, something Windows
 98 SE never offered.
